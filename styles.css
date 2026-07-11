@@ -185,3 +185,50 @@ footer p {
     font-weight: 600;
     margin: 0; /* Limpia el margen inferior que tenían los demás párrafos */
 }
+
+
+/* ==========================================================================
+   4. RESPONSIVE DESIGN (MEDIA QUERIES PARA CELULARES)
+   ========================================================================== */
+
+/* Esta regla se activará SOLAMENTE en pantallas de 768px de ancho o menores */
+@media (max-width: 768px) {
+    body {
+        /* Reducimos el espacio alrededor en pantallas pequeñas */
+        padding: 20px 15px 0 15px; 
+    }
+
+    header {
+        margin-bottom: 25px;
+    }
+
+    header h1 {
+        font-size: 1.6rem; /* Texto un poco más pequeño para que no se desborde */
+    }
+
+    main {
+        /* 🚀 LA MAGIA RESPONSIVA: Pasamos de 2 columnas (1.2fr 1fr) a solo 1 columna */
+        grid-template-columns: 1fr; 
+        gap: 20px; /* Reducimos la separación de las tarjetas */
+    }
+
+    section {
+        padding: 20px; /* Menos relleno interno en las tarjetas para ganar espacio en pantalla */
+    }
+
+    h2 {
+        font-size: 1.2rem; /* Subtítulos adaptados a celular */
+    }
+
+    /* Reajuste del truco del footer para pantallas móviles */
+    footer {
+        width: calc(100% + 30px);
+        margin-left: -15px;
+        margin-right: -15px;
+        padding: 15px;
+    }
+    
+    footer p {
+        font-size: 0.8rem;
+    }
+}
