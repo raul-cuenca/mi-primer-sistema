@@ -1,77 +1,187 @@
-    /* Importamos la fuente Montserrat desde los servidores de Google */
-    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap');
+/* ==========================================================================
+   1. VARIABLES DE MARCA Y CONFIGURACIÓN GLOBAL
+   ========================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
 
-    body {
-        background-color: #f0f2f5;
-        font-family: 'Montserrat', sans-serif;
-        /* Aplicamos la nueva fuente */
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        margin: 0;
-        gap: 40px;
-        /* Añade una separación elegante entre el texto y el formulario */
-    }
+:root {
+    /* Tus colores corporativos suaves y profesionales */
+    --azul-profesional: #3a7ca5;
+    --azul-hover: #2d6182;
+    --verde-elegante: #52b788;
+    --verde-pantalla: #e8f5e9; /* Un fondo verde muy suave para resaltar el precio */
+    
+    /* Colores neutros para estructura y fondos */
+    --fondo-sistema: #eef4f8; /* Un azul cielo pastel que le da un aire más vivo y fresco a la web */
+    --blanco-tarjeta: #ffffff;
+    --texto-principal: #1e293b; /* Gris oscuro elegante, evita el negro puro */
+    --texto-secundario: #64748b;
+    
+    /* Tipografía */
+    --fuente-marca: 'Montserrat', sans-serif;
+}
 
-    /* Estilos del bloque izquierdo de texto */
-    h1 {
-        color: #1a1a1a;
-        margin-bottom: 10px;
-    }
+/* Reseteo profesional: Asegura que los márgenes no rompan tus diseños */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
-    p {
-        color: #595959;
-        font-size: 1.1rem;
-    }
+body {
+    font-family: var(--fuente-marca);
+    background-color: var(--fondo-sistema);
+    color: var(--texto-principal);
+    line-height: 1.6;
+    
+    /* Mantenemos el espacio arriba y a los lados, pero quitamos el de abajo */
+    padding: 40px 20px 0 20px; 
+    
+    /* 🚀 ACTIVAMOS EL TRUCO STICKY FOOTER */
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* Obliga a la página a ocupar toda la pantalla */
+}
 
-    /* Estilos del Formulario (Ahora es un contenedor vertical) */
-    form {
-        background: white;
-        padding: 30px;
-        border-radius: 12px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-        display: flex;
-        flex-direction: column;
-        /* Alinea los elementos hacia abajo */
-        width: 300px;
-    }
+/* ==========================================================================
+   2. ARQUITECTURA DE LA INTERFAZ CON CSS GRID
+   ========================================================================== */
 
-    label {
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: #4a4a4a;
-        margin-bottom: 8px;
-    }
+header {
+    text-align: center;
+    margin-bottom: 40px;
+}
 
-    input {
-        padding: 12px;
-        border: 1px solid #ccd0d5;
-        border-radius: 6px;
-        font-family: 'Montserrat', sans-serif;
-        font-size: 0.9rem;
-        margin-bottom: 20px;
-        outline: none;
-    }
 
-    input:focus {
-        border-color: #0066cc;
-        /* Cambia de color al hacer clic dentro */
-    }
+header h1 {
+    color: var(--azul-profesional);
+    font-size: 2.2rem;
+    font-weight: 700;
+    display: inline-block;
+    border-bottom: 4px solid var(--verde-elegante); /* Línea de acento verde suave */
+    padding-bottom: 8px;
+}
 
-    button {
-        background-color: #0066cc;
-        color: white;
-        border: none;
-        padding: 12px;
-        border-radius: 6px;
-        font-family: 'Montserrat', sans-serif;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background 0.2s;
-    }
+/* Aquí ocurre la magia del Grid */
+main {
+    display: grid;
+    /* Creamos 2 columnas: el formulario ocupa 1.2 partes y el resultado ocupa 1 parte */
+    grid-template-columns: 1.2fr 1fr; 
+    gap: 30px; /* Espacio de separación exacto entre ambas columnas */
+    max-width: 1100px;
+    margin: 0 auto; /* Centra todo el sistema en pantallas grandes */
+}
 
-    button:hover {
-        background-color: #0052a3;
-        /* Se oscurece un poco al pasar el mouse */
-    }
+/* ==========================================================================
+   3. ESTILOS DE LAS COMPONENTES (TARJETAS Y FORMULARIOS)
+   ========================================================================== */
+
+/* Estilo base para nuestras secciones (Efecto Tarjeta Moderna) */
+section {
+    background-color: var(--blanco-tarjeta);
+    padding: 35px;
+    border-radius: 14px;
+    /* Una sombra suave para dar profundidad y elegancia */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+h2 {
+    font-size: 1.4rem;
+    margin-bottom: 15px;
+    color: var(--texto-principal);
+}
+
+p {
+    color: var(--texto-secundario);
+    margin-bottom: 25px;
+}
+
+/* Estilos del Formulario */
+.grupo-control {
+    margin-bottom: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* Espacio entre la etiqueta y la caja de texto */
+}
+
+label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--texto-principal);
+}
+
+select, input {
+    padding: 12px 15px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-family: var(--fuente-marca);
+    font-size: 1rem;
+    color: var(--texto-principal);
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+/* Efecto visual cuando el usuario hace clic para escribir */
+select:focus, input:focus {
+    border-color: var(--azul-profesional);
+}
+
+/* Botón estilizado */
+button {
+    background-color: var(--azul-profesional);
+    color: var(--blanco-tarjeta);
+    border: none;
+    padding: 14px;
+    font-family: var(--fuente-marca);
+    font-weight: 700;
+    font-size: 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+    transition: background-color 0.2s, transform 0.1s;
+    margin-top: 10px;
+}
+
+button:hover {
+    background-color: var(--azul-hover);
+}
+
+button:active {
+    transform: scale(0.98); /* Pequeño efecto de hundimiento al hacer clic */
+}
+
+/* Pantalla donde se mostrará el precio final */
+#pantalla-precio {
+    background-color: var(--verde-pantalla);
+    border-left: 5px solid var(--verde-elegante);
+    padding: 25px;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+
+#pantalla-precio p {
+    color: #2d6a4f; /* Verde oscuro para que contraste con el fondo claro */
+    font-weight: 600;
+    margin-bottom: 0;
+}
+
+footer {
+    background-color: var(--azul-profesional);
+    padding: 20px;
+    text-align: center;
+    
+    /* El motor que empuja el footer abajo de forma permanente */
+    margin-top: auto; 
+    
+    /* Truco profesional para expandirse de borde a borde cancelando el padding del body */
+    width: calc(100% + 40px);
+    margin-left: -20px;
+    margin-right: -20px;
+}
+
+/* Nuevo bloque específico para arreglar el texto */
+footer p {
+    color: #ffffff; /* Blanco puro e impecable */
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin: 0; /* Limpia el margen inferior que tenían los demás párrafos */
+}
