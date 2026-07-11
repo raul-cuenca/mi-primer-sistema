@@ -10,47 +10,40 @@ const tarifasRCS = {
 /* ==========================================================================
    2. CAPTURA DE ELEMENTOS DE LA INTERFAZ (DOM)
    ========================================================================== */
+const form = document.getElementById('form-cotizador');
 const tipoTaza = document.getElementById('tipo-taza');
 const cantidadInput = document.getElementById('cantidad');
 const pantallaPrecio = document.getElementById('pantalla-precio');
 
 /* ==========================================================================
-   3. FUNCIÓN REUTILIZABLE DE CÁLCULO (EL "MOTOR")
+   3. EL ESCUCHADOR DE EVENTOS (EVENT LISTENER)
    ========================================================================== */
-function calcularEnTiempoReal() {
+form.addEventListener('submit', function(event) {
+    // Evita que la página se recargue y borre los datos al enviar el formulario
+    event.preventDefault(); 
+
+    // Extraemos los valores actuales que el usuario eligió
     const modelo = tipoTaza.value;
     const cantidad = parseInt(cantidadInput.value);
-
-    /* 🔴 CONTROL DE SEGURIDAD: 
-       Si el usuario borra el número, deja el campo vacío o no ha elegido modelo,
-       reiniciamos el panel de resultados con el mensaje original y salimos. */
-    if (!modelo || isNaN(cantidad) || cantidad < 1) {
-        pantallaPrecio.innerHTML = `
-            <p style="color: #2d6a4f; font-weight: 600; margin-bottom: 0;">
-                Selecciona tus opciones para calcular el total.
-            </p>
-        `;
-        return; // El "return" detiene la función de inmediato
-    }
 
     // 4. APLICACIÓN DE REGLAS DE NEGOCIO POR ESCALAS
     let precioUnitario = 0;
 
     if (cantidad >= 100) {
-        precioUnitario = tarifasRCS[modelo].ciento;
+        precioUnitario = tarifasRCS[modelo].ciento; // Precio por ciento
     } else if (cantidad >= 24) {
-        precioUnitario = tarifasRCS[modelo].docenas;
+        precioUnitario = tarifasRCS[modelo].docenas; // Precio por 2 docenas
     } else {
-        precioUnitario = tarifasRCS[modelo].unidad;
+        precioUnitario = tarifasRCS[modelo].unidad; // Precio por unidad
     }
 
     // 5. CÁLCULO MATEMÁTICO
     const total = cantidad * precioUnitario;
 
-    // 6. INYECCIÓN DINÁMICA DE RESULTADOS
+    // 6. INYECCIÓN DINÁMICA DE RESULTADOS EN EL HTML
     pantallaPrecio.innerHTML = `
-        <div style="animation: fadeIn 0.3s ease;">
-            <h3 style="color: #2d6a4f; margin-bottom: 15px; font-size: 1.2rem;">¡Cotización al Instante!</h3>
+        <div style="animation: fadeIn 0.4s ease;">
+            <h3 style="color: #2d6a4f; margin-bottom: 15px; font-size: 1.2rem;">¡Cotización Procesada!</h3>
             <p style="color: #1e293b; margin-bottom: 8px;">
                 <strong>Modelo:</strong> ${tipoTaza.options[tipoTaza.selectedIndex].text}
             </p>
@@ -66,13 +59,4 @@ function calcularEnTiempoReal() {
             </p>
         </div>
     `;
-}
-
-/* ==========================================================================
-   4. ESCUCHADORES DE EVENTOS EN TIEMPO REAL
-   ========================================================================== */
-// 'change' se activa cuando el usuario cambia la opción del menú desplegable
-tipoTaza.addEventListener('change', calcularEnTiempoReal);
-
-// 'input' se activa instantáneamente CADA VEZ que el usuario presiona una tecla o cambia el número
-cantidadInput.addEventListener('input', calcularEnTiempoReal);
+});
