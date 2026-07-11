@@ -69,10 +69,13 @@ function calcularEnTiempoReal() {
 }
 
 /* ==========================================================================
-   4. ESCUCHADORES DE EVENTOS EN TIEMPO REAL
+   4. ESCUCHADORES DE EVENTOS EN TIEMPO REAL (HÍBRIDO COMPU/MÓVIL)
    ========================================================================== */
-// 'change' se activa cuando el usuario cambia la opción del menú desplegable
+// Detecta cuando cambias de modelo de taza
 tipoTaza.addEventListener('change', calcularEnTiempoReal);
 
-// 'input' se activa instantáneamente CADA VEZ que el usuario presiona una tecla o cambia el número
+// Detecta cambios en computadoras, flechas numéricas y copy-paste
 cantidadInput.addEventListener('input', calcularEnTiempoReal);
+
+// 🚀 EL TRUCO PARA CELULARES: Detecta instantáneamente cada vez que levantas el dedo del teclado virtual
+cantidadInput.addEventListener('keyup', calcularEnTiempoReal);
