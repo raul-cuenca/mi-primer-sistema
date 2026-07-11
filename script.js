@@ -48,6 +48,9 @@ form.addEventListener('submit', function(event) {
                 <strong>Modelo:</strong> ${tipoTaza.options[tipoTaza.selectedIndex].text}
             </p>
             <p style="color: #1e293b; margin-bottom: 8px;">
+                <strong>Cantidad solicitada:</strong> ${cantidad} unidades
+            </p>
+            <p style="color: #1e293b; margin-bottom: 8px;">
                 <strong>Precio Unitario:</strong> S/ ${precioUnitario.toFixed(2)}
             </p>
             <hr style="border: 0; border-top: 1px solid #c8e6c9; margin: 12px 0;">
