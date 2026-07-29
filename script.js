@@ -470,8 +470,23 @@ function cerrarModalWhatsApp() {
     if (modal) modal.classList.add('hidden');
 }
 
+// Adapta el placeholder según el tipo de documento seleccionado
+function actualizarPlaceholderDoc() {
+    const tipo = document.getElementById('cliente-tipo-doc').value;
+    const inputDoc = document.getElementById('cliente-documento');
+    
+    if (tipo === 'dni') {
+        inputDoc.placeholder = "Ej: 71234567 (8 dígitos)";
+    } else if (tipo === 'ce') {
+        inputDoc.placeholder = "Ej: 001234567 (9 caracteres)";
+    } else if (tipo === 'ruc') {
+        inputDoc.placeholder = "Ej: 20600000000 (11 dígitos)";
+    }
+}
+
 function validarYEnviarWhatsApp() {
     const inputNombre = document.getElementById('cliente-nombre');
+    const selectTipoDoc = document.getElementById('cliente-tipo-doc');
     const inputDoc = document.getElementById('cliente-documento');
     const inputTel = document.getElementById('cliente-telefono');
     const inputCorreo = document.getElementById('cliente-correo');
@@ -481,51 +496,79 @@ function validarYEnviarWhatsApp() {
     const errTel = document.getElementById('error-telefono');
     const errCorreo = document.getElementById('error-correo');
 
-    // Ocultar mensajes de error previas
-    errNombre.classList.add('hidden');
-    errDoc.classList.add('hidden');
-    errTel.classList.add('hidden');
-    errCorreo.classList.add('hidden');
+    // Ocultar mensajes de error previos
+    if (errNombre) errNombre.classList.add('hidden');
+    if (errDoc) errDoc.classList.add('hidden');
+    if (errTel) errTel.classList.add('hidden');
+    if (errCorreo) errCorreo.classList.add('hidden');
 
     let esValido = true;
 
-    // 1. Validar Nombre/Razón Social (mínimo 3 caracteres)
+    // 1. Validar Nombre / Razón Social (mínimo 3 caracteres)
     const nombreVal = inputNombre.value.trim();
     if (nombreVal.length < 3) {
-        errNombre.classList.remove('hidden');
+        if (errNombre) errNombre.classList.remove('hidden');
         esValido = false;
     }
 
-    // 2. Validar DNI / RUC (8 u 11 dígitos numéricos o formato válido)
+    // 2. Validar Documento según Tipo Seleccionado
+    const tipoDoc = selectTipoDoc.value;
     const docVal = inputDoc.value.trim();
-    const regexDoc = /^[0-9]{8,11}$/;
-    if (!regexDoc.test(docVal)) {
-        errDoc.classList.remove('hidden');
-        esValido = false;
+
+    if (tipoDoc === 'dni') {
+        const regexDNI = /^\d{8}$/;
+        if (!regexDNI.test(docVal)) {
+            if (errDoc) {
+                errDoc.textContent = '⚠️ El DNI debe tener exactamente 8 dígitos numéricos.';
+                errDoc.classList.remove('hidden');
+            }
+            esValido = false;
+        }
+    } else if (tipoDoc === 'ce') {
+        const regexCE = /^[a-zA-Z0-9]{9}$/;
+        if (!regexCE.test(docVal)) {
+            if (errDoc) {
+                errDoc.textContent = '⚠️ El Carnet de Extranjería debe tener exactamente 9 caracteres alfanuméricos.';
+                errDoc.classList.remove('hidden');
+            }
+            esValido = false;
+        }
+    } else if (tipoDoc === 'ruc') {
+        const regexRUC = /^\d{11}$/;
+        if (!regexRUC.test(docVal)) {
+            if (errDoc) {
+                errDoc.textContent = '⚠️ El RUC debe tener exactamente 11 dígitos numéricos.';
+                errDoc.classList.remove('hidden');
+            }
+            esValido = false;
+        }
     }
 
     // 3. Validar Teléfono (mínimo 9 dígitos numéricos)
     const telVal = inputTel.value.trim();
-    const regexTel = /^[0-9\s+]{9,15}$/;
+    const regexTel = /^[0-9\s+]{9,9}$/;
     if (!regexTel.test(telVal)) {
-        errTel.classList.remove('hidden');
+        if (errTel) errTel.classList.remove('hidden');
         esValido = false;
     }
 
-    // 4. Validar Correo (Opcional, pero si se escribe debe ser sintácticamente correcto)
+    // 4. Validar Correo (Opcional, pero si se ingresa valida sintaxis)
     const correoVal = inputCorreo.value.trim();
     if (correoVal !== "") {
         const regexCorreo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!regexCorreo.test(correoVal)) {
-            errCorreo.classList.remove('hidden');
+            if (errCorreo) errCorreo.classList.remove('hidden');
             esValido = false;
         }
     }
 
     if (!esValido) return;
 
-    // Si todas las validaciones son exitosas, construimos y abrimos WhatsApp
-    ejecutarEnvioWhatsApp(nombreVal, docVal, telVal, correoVal);
+    // Etiqueta legible para el mensaje
+    const etiquetaTipoDoc = tipoDoc === 'dni' ? 'DNI' : (tipoDoc === 'ce' ? 'Carnet de Extranjería' : 'RUC');
+
+    // Ejecutar envío a WhatsApp y cerrar modal
+    ejecutarEnvioWhatsApp(nombreVal, `${etiquetaTipoDoc}: ${docVal}`, telVal, correoVal);
     cerrarModalWhatsApp();
 }
 
@@ -534,6 +577,8 @@ function ejecutarEnvioWhatsApp(nombre, documento, telefono, correo) {
     const prodKey = productoSelect.value;
     const cantidad = parseInt(cantidadInput.value);
     const estadoDiseno = estadoDisenoSelect ? estadoDisenoSelect.value : 'listo';
+
+    if (!catKey || !prodKey || isNaN(cantidad)) return;
 
     const datosProducto = tarifasRCS[catKey].productos[prodKey];
     const escalasPrecios = datosProducto.precios;
@@ -573,12 +618,12 @@ function ejecutarEnvioWhatsApp(nombre, documento, telefono, correo) {
     const nombreCat = tarifasRCS[catKey].nombre;
     const nombreProd = datosProducto.nombre;
 
-    // Mensaje de WhatsApp estructurado con sección de datos del cliente
+    // Mensaje de WhatsApp estructurado
     const mensajeTexto = 
         `✨ *¡NUEVA COTIZACIÓN DESDE LA WEB!* ✨\n\n` +
         `👤 *DATOS DEL CLIENTE*\n` +
         `📛 *Cliente:* ${nombre}\n` +
-        `🆔 *DNI / RUC:* ${documento}\n` +
+        `🆔 *${documento}*\n` +
         `📞 *Teléfono:* ${telefono}\n` +
         `✉️ *Correo:* ${correo ? correo : 'No especificado'}\n\n` +
         `🎨 *DETALLES DEL PRODUCTO*\n` +
@@ -598,7 +643,12 @@ function ejecutarEnvioWhatsApp(nombre, documento, telefono, correo) {
     const mensajeCodificado = encodeURIComponent(mensajeTexto);
     const urlWhatsApp = `https://wa.me/${telefonoRCS}?text=${mensajeCodificado}`;
 
+    // Abrir WhatsApp con el mensaje
     window.open(urlWhatsApp, '_blank');
+
+    // Resetear todos los campos del cotizador y modal
+    limpiarFormulario();
+}
 }
 
 /* ==========================================================================
@@ -655,4 +705,46 @@ cantidadInput.addEventListener('keyup', calcularEnTiempoReal);
 
 if (estadoDisenoSelect) {
     estadoDisenoSelect.addEventListener('change', calcularEnTiempoReal);
+}
+
+/*LIMPIAR LOS CAMPOS DE LA COTIZACIÓN */
+
+function limpiarFormulario() {
+    // 1. Limpiar campos del Modal
+    const inputNombre = document.getElementById('cliente-nombre');
+    const selectTipoDoc = document.getElementById('cliente-tipo-doc');
+    const inputDoc = document.getElementById('cliente-documento');
+    const inputTel = document.getElementById('cliente-telefono');
+    const inputCorreo = document.getElementById('cliente-correo');
+
+    if (inputNombre) inputNombre.value = '';
+    if (selectTipoDoc) selectTipoDoc.value = 'dni';
+    if (inputDoc) inputDoc.value = '';
+    if (inputTel) inputTel.value = '';
+    if (inputCorreo) inputCorreo.value = '';
+
+    // Restablecer el placeholder del documento a DNI
+    actualizarPlaceholderDoc();
+
+    // 2. Limpiar campos del Cotizador Principal
+    if (categoriaSelect) categoriaSelect.selectedIndex = 0;
+    
+    // Disparar el evento change si existe lógica dependiente para limpiar select de productos
+    if (categoriaSelect) {
+        categoriaSelect.dispatchEvent(new Event('change'));
+    }
+
+    if (productoSelect) productoSelect.selectedIndex = 0;
+    if (cantidadInput) cantidadInput.value = '';
+    if (estadoDisenoSelect) estadoDisenoSelect.selectedIndex = 0;
+
+    // Limpiar selectores adicionales dinámicos si existen
+    const selectoresAdicionales = document.querySelectorAll('.select-adicional');
+    selectoresAdicionales.forEach(select => select.selectedIndex = 0);
+
+    // 3. Resetear el resumen o tarjeta de resultados (si la tuvieras)
+    const contenedorResumen = document.getElementById('resumen-cotizacion');
+    if (contenedorResumen) {
+        contenedorResumen.innerHTML = '<p class="text-slate-400 text-sm">Selecciona un producto y cantidad para ver el cálculo.</p>';
+    }
 }

@@ -182,14 +182,22 @@
                     <p id="error-nombre" class="text-[11px] text-red-400 mt-1 hidden">⚠️ Ingrese un nombre o razón social válido (mín. 3 caracteres).</p>
                 </div>
 
-                <!-- 2. Documento / RUC -->
+<!-- 2. Tipo y Número de Documento -->
                 <div>
-                    <label for="cliente-documento" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">
-                        DNI / RUC <span class="text-emerald-400">*</span>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">
+                        Documento de Identidad / RUC <span class="text-emerald-400">*</span>
                     </label>
-                    <input type="text" id="cliente-documento" placeholder="Ej: 71234567 o 20600000000"
-                        class="w-full bg-slate-800/80 border border-slate-700 text-white text-sm rounded-xl p-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
-                    <p id="error-documento" class="text-[11px] text-red-400 mt-1 hidden">⚠️ Ingrese un DNI (8 dígitos) o RUC (11 dígitos) válido.</p>
+                    <div class="grid grid-cols-3 gap-2">
+                        <select id="cliente-tipo-doc" onchange="actualizarPlaceholderDoc()"
+                            class="col-span-1 bg-slate-800/80 border border-slate-700 text-white text-xs font-semibold rounded-xl p-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition cursor-pointer">
+                            <option value="dni">DNI</option>
+                            <option value="ce">C.E.</option>
+                            <option value="ruc">RUC</option>
+                        </select>
+                        <input type="text" id="cliente-documento" placeholder="Ej: 71234567"
+                            class="col-span-2 bg-slate-800/80 border border-slate-700 text-white text-sm rounded-xl p-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+                    </div>
+                    <p id="error-documento" class="text-[11px] text-red-400 mt-1 hidden"></p>
                 </div>
 
                 <!-- 3. Teléfono de contacto -->
