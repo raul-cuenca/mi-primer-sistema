@@ -1,17 +1,32 @@
 {
-    "blanca_11oz": {
-        "unidad": 7.00,
-        "docenas": 6.50,
-        "ciento": 5.90
+    "tazas": {
+        "nombre": "☕ Tazas Personalizadas",
+        "productos": {
+            "blanca_11oz": {
+                "nombre": "Taza Blanca 11oz",
+                "precios": { "unidad": 7.00, "docenas": 6.50, "ciento": 5.90 }
+            },
+            "conica_15oz": {
+                "nombre": "Taza Cónica 15oz",
+                "precios": { "unidad": 11.90, "docenas": 10.50, "ciento": 9.90 }
+            },
+            "magica": {
+                "nombre": "Taza Mágica 11oz",
+                "precios": { "unidad": 14.90, "docenas": 13.90, "ciento": 12.90 }
+            }
+        }
     },
-    "conica_15oz": {
-        "unidad": 11.90,
-        "docenas": 10.50,
-        "ciento": 9.90
-    },
-    "magica": {
-        "unidad": 14.90,
-        "docenas": 13.90,
-        "ciento": 12.90
+    "polos": {
+        "nombre": "👕 Polos Estampados / Sublimados",
+        "productos": {
+            "polo_algodon": {
+                "nombre": "Polo 100% Algodón Reactivo",
+                "precios": { "unidad": 35.00, "docenas": 28.00, "ciento": 22.00 }
+            },
+            "polo_sublimado": {
+                "nombre": "Polo Sublimado Premium",
+                "precios": { "unidad": 29.00, "docenas": 22.00, "ciento": 17.50 }
+            }
+        }
     }
 }

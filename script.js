@@ -1,80 +1,125 @@
 /* ==========================================================================
    1. VARIABLES GLOBALES Y CAPTURA DEL DOM
    ========================================================================== */
-// Inicia nulo porque ahora los precios se cargarán desde el archivo JSON
 let tarifasRCS = null; 
 
-const tipoTaza = document.getElementById('tipo-taza');
+const categoriaSelect = document.getElementById('categoria');
+const productoSelect = document.getElementById('tipo-producto');
 const cantidadInput = document.getElementById('cantidad');
 const pantallaPrecio = document.getElementById('pantalla-precio');
 
 /* ==========================================================================
-   2. CARGA ASÍNCRONA DE DATOS (FETCH + JSON)
+   2. CARGA ASÍNCRONA DE DATOS (FETCH) Y POBLADO DE CATEGORÍAS
    ========================================================================== */
 async function cargarTarifas() {
     try {
-        // Pedimos el archivo JSON a la red
         const respuesta = await fetch('precios.json');
-        
-        if (!respuesta.ok) throw new Error("No se pudo cargar el archivo JSON");
+        if (!respuesta.ok) throw new Error("No se pudo cargar el JSON");
 
-        // Convertimos la respuesta en un objeto de JavaScript usable
         tarifasRCS = await respuesta.json();
 
-        // Una vez que los precios están listos en memoria, restauramos lo guardado en localStorage
+        // Llenar el selector de Categorías dinámicamente
+        poblarCategorias();
+
+        // Intentar restaurar datos previos de localStorage
         restaurarDatosGuardados();
 
     } catch (error) {
-        console.error('Error al obtener los precios:', error);
+        console.error('Error al obtener el catálogo:', error);
         pantallaPrecio.innerHTML = `
             <p style="color: #d90429; font-weight: 600;">
-                ❌ No se pudieron cargar las tarifas de precios. Por favor recarga la página.
+                ❌ No se pudieron cargar los productos. Por favor intenta recargar.
             </p>
         `;
     }
 }
 
+function poblarCategorias() {
+    categoriaSelect.innerHTML = '<option value="">-- Selecciona Categoría --</option>';
+
+    // Iteramos sobre las llaves del JSON (tazas, polos)
+    for (const keyCat in tarifasRCS) {
+        const option = document.createElement('option');
+        option.value = keyCat;
+        option.textContent = tarifasRCS[keyCat].nombre;
+        categoriaSelect.appendChild(option);
+    }
+}
+
+function actualizarProductos() {
+    const catSeleccionada = categoriaSelect.value;
+    productoSelect.innerHTML = '<option value="">-- Selecciona Modelo --</option>';
+
+    if (!catSeleccionada || !tarifasRCS[catSeleccionada]) {
+        productoSelect.disabled = true;
+        calcularEnTiempoReal();
+        return;
+    }
+
+    productoSelect.disabled = false;
+    const productos = tarifasRCS[catSeleccionada].productos;
+
+    for (const keyProd in productos) {
+        const option = document.createElement('option');
+        option.value = keyProd;
+        option.textContent = productos[keyProd].nombre;
+        productoSelect.appendChild(option);
+    }
+
+    calcularEnTiempoReal();
+}
+
 /* ==========================================================================
-   3. FUNCIÓN REUTILIZABLE DE CÁLCULO
+   3. FUNCIÓN REUTILIZABLE DE CÁLCULO Y WHATSAPP
    ========================================================================== */
 function calcularEnTiempoReal() {
-    // Control de seguridad: Si el JSON aún no ha terminado de cargar, no hace nada
     if (!tarifasRCS) return;
 
-    const modelo = tipoTaza.value;
+    const catKey = categoriaSelect.value;
+    const prodKey = productoSelect.value;
     const cantidad = parseInt(cantidadInput.value);
 
-    if (modelo) localStorage.setItem('rcs_modelo', modelo);
+    // Guardar estado en localStorage
+    if (catKey) localStorage.setItem('rcs_categoria', catKey);
+    if (prodKey) localStorage.setItem('rcs_producto', prodKey);
     if (!isNaN(cantidad)) localStorage.setItem('rcs_cantidad', cantidad);
 
-    if (!modelo || isNaN(cantidad) || cantidad < 1) {
+    // Validación
+    if (!catKey || !prodKey || isNaN(cantidad) || cantidad < 1) {
         pantallaPrecio.innerHTML = `
             <p style="color: #2d6a4f; font-weight: 600; margin-bottom: 0;">
-                Selecciona tus opciones para calcular el total.
+                Selecciona la categoría, modelo y cantidad para ver el cálculo.
             </p>
         `;
         return;
     }
 
+    // Extraer datos del producto seleccionado
+    const datosProducto = tarifasRCS[catKey].productos[prodKey];
+    const escalasPrecios = datosProducto.precios;
+
     let precioUnitario = 0;
     if (cantidad >= 100) {
-        precioUnitario = tarifasRCS[modelo].ciento;
+        precioUnitario = escalasPrecios.ciento;
     } else if (cantidad >= 24) {
-        precioUnitario = tarifasRCS[modelo].docenas;
+        precioUnitario = escalasPrecios.docenas;
     } else {
-        precioUnitario = tarifasRCS[modelo].unidad;
+        precioUnitario = escalasPrecios.unidad;
     }
 
     const total = cantidad * precioUnitario;
 
+    // Mensaje para WhatsApp
     const telefonoRCS = "51959562867"; // Tu número real aquí
-    const nombreModelo = tipoTaza.options[tipoTaza.selectedIndex].text;
+    const nombreCat = tarifasRCS[catKey].nombre;
+    const nombreProd = datosProducto.nombre;
 
     const mensajeTexto = 
         `✨ *¡NUEVA COTIZACIÓN DESDE LA WEB!* ✨\n\n` +
-        `👋 Hola *RCS Merchandising*, acabo de calcular una cotización en su sistema y me gustaría coordinar mi pedido:\n\n` +
+        `👋 Hola *RCS Merchandising*, me gustaría coordinar el siguiente pedido:\n\n` +
         `🎨 *DETALLES DEL PRODUCTO*\n` +
-        `☕ *Modelo:* ${nombreModelo}\n` +
+        `📁 *Categoría:* ${nombreCat}\n` +
+        `🛍️ *Modelo:* ${nombreProd}\n` +
         `📦 *Cantidad:* ${cantidad} unidades\n` +
         `🏷️ *Precio Unitario:* S/ ${precioUnitario.toFixed(2)}\n\n` +
         `💳 *RESUMEN DE PAGO*\n` +
@@ -88,7 +133,10 @@ function calcularEnTiempoReal() {
         <div style="animation: fadeIn 0.3s ease;">
             <h3 style="color: #2d6a4f; margin-bottom: 15px; font-size: 1.2rem;">¡Cotización al Instante!</h3>
             <p style="color: #1e293b; margin-bottom: 8px;">
-                <strong>Modelo:</strong> ${nombreModelo}
+                <strong>Categoría:</strong> ${nombreCat}
+            </p>
+            <p style="color: #1e293b; margin-bottom: 8px;">
+                <strong>Modelo:</strong> ${nombreProd}
             </p>
             <p style="color: #1e293b; margin-bottom: 8px;">
                 <strong>Cantidad solicitada:</strong> ${cantidad} unidades
@@ -109,26 +157,43 @@ function calcularEnTiempoReal() {
 }
 
 /* ==========================================================================
-   4. RESTAURAR DATOS DESDE LOCALSTORAGE
+   4. RESTAURAR LOCALSTORAGE
    ========================================================================== */
 function restaurarDatosGuardados() {
-    const modeloGuardado = localStorage.getItem('rcs_modelo');
+    const catGuardada = localStorage.getItem('rcs_categoria');
+    const prodGuardado = localStorage.getItem('rcs_producto');
     const cantidadGuardada = localStorage.getItem('rcs_cantidad');
 
-    if (modeloGuardado) tipoTaza.value = modeloGuardado;
-    if (cantidadGuardada) cantidadInput.value = cantidadGuardada;
+    if (catGuardada && tarifasRCS[catGuardada]) {
+        categoriaSelect.value = catGuardada;
+        actualizarProductos(); // Llena los productos de esa categoría
 
-    if (modeloGuardado && cantidadGuardada) {
-        calcularEnTiempoReal();
+        if (prodGuardado && tarifasRCS[catGuardada].productos[prodGuardado]) {
+            productoSelect.value = prodGuardado;
+        }
     }
+
+    if (cantidadGuardada) {
+        cantidadInput.value = cantidadGuardada;
+    }
+
+    calcularEnTiempoReal();
 }
 
 /* ==========================================================================
    5. ESCUCHADORES DE EVENTOS
    ========================================================================== */
-// Iniciamos la descarga del JSON tan pronto se cargue el DOM
 window.addEventListener('DOMContentLoaded', cargarTarifas);
 
-tipoTaza.addEventListener('change', calcularEnTiempoReal);
+// 🔄 AL CAMBIAR DE CATEGORÍA: Limpiamos la cantidad y el producto anterior
+categoriaSelect.addEventListener('change', () => {
+    cantidadInput.value = ''; // Resetea el input de cantidad
+    localStorage.removeItem('rcs_cantidad'); // Borra la cantidad antigua de la memoria
+    localStorage.removeItem('rcs_producto'); // Borra el producto antiguo de la memoria
+    
+    actualizarProductos(); // Vuelve a llenar la lista de productos de la nueva categoría
+});
+
+productoSelect.addEventListener('change', calcularEnTiempoReal);
 cantidadInput.addEventListener('input', calcularEnTiempoReal);
 cantidadInput.addEventListener('keyup', calcularEnTiempoReal);
