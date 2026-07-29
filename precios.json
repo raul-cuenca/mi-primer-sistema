@@ -4,15 +4,59 @@
         "productos": {
             "blanca_11oz": {
                 "nombre": "Taza Blanca 11oz",
-                "precios": { "unidad": 7.00, "docenas": 6.50, "ciento": 5.90 }
+                "precios": { "unidad": 7.00, "docenas": 6.50, "ciento": 5.90 },
+                "adicionales": {
+                    "color": {
+                        "label": "Acabado de Color Interno:",
+                        "opciones": {
+                            "blanco": { "nombre": "Blanco Clásico (Sin costo extra)", "extra": 0.00 },
+                            "color_interno": { "nombre": "Color Interno (Rojo, Verde, Amarillo, Celeste, etc.) (+S/ 0.50)", "extra": 0.50 }
+                        }
+                    },
+                    "empaque": {
+                        "label": "Presentación / Empaque:",
+                        "opciones": {
+                            "docena": { "nombre": "Paquete por Docena (Sin costo extra)", "extra": 0.00 },
+                            "caja_blanca": { "nombre": "Caja Individual en Blanco (+S/ 1.00)", "extra": 1.00 },
+                            "caja_personalizada": { "nombre": "Caja Individual Personalizada (+S/ 2.00)", "extra": 2.00 }
+                        }
+                    }
+                }
             },
             "conica_15oz": {
                 "nombre": "Taza Cónica 15oz",
-                "precios": { "unidad": 11.90, "docenas": 10.50, "ciento": 9.90 }
+                "precios": { "unidad": 11.90, "docenas": 10.50, "ciento": 9.90 },
+                "adicionales": {
+                    "color": {
+                        "label": "Acabado de Color Interno:",
+                        "opciones": {
+                            "blanco": { "nombre": "Blanco Clásico (Sin costo extra)", "extra": 0.00 },
+                            "color_interno": { "nombre": "Color Interno (Rojo, Verde, Amarillo, Celeste, etc.) (+S/ 0.50)", "extra": 0.50 }
+                        }
+                    },
+                    "empaque": {
+                        "label": "Presentación / Empaque:",
+                        "opciones": {
+                            "docena": { "nombre": "Paquete por Docena (Sin costo extra)", "extra": 0.00 },
+                            "caja_blanca": { "nombre": "Caja Individual en Blanco (+S/ 1.00)", "extra": 1.00 },
+                            "caja_personalizada": { "nombre": "Caja Individual Personalizada (+S/ 2.00)", "extra": 2.00 }
+                        }
+                    }
+                }
             },
             "magica": {
                 "nombre": "Taza Mágica 11oz",
-                "precios": { "unidad": 14.90, "docenas": 13.90, "ciento": 12.90 }
+                "precios": { "unidad": 14.90, "docenas": 13.90, "ciento": 12.90 },
+                "adicionales": {
+                    "empaque": {
+                        "label": "Presentación / Empaque:",
+                        "opciones": {
+                            "docena": { "nombre": "Paquete por Docena (Sin costo extra)", "extra": 0.00 },
+                            "caja_blanca": { "nombre": "Caja Individual en Blanco (+S/ 1.00)", "extra": 1.00 },
+                            "caja_personalizada": { "nombre": "Caja Individual Personalizada (+S/ 2.00)", "extra": 2.00 }
+                        }
+                    }
+                }
             }
         }
     },
@@ -21,11 +65,29 @@
         "productos": {
             "polo_algodon": {
                 "nombre": "Polo 100% Algodón Reactivo",
-                "precios": { "unidad": 35.00, "docenas": 28.00, "ciento": 22.00 }
+                "precios": { "unidad": 35.00, "docenas": 28.00, "ciento": 22.00 },
+                "adicionales": {
+                    "estampado": {
+                        "label": "Ubicación del Estampado:",
+                        "opciones": {
+                            "pecho": { "nombre": "Solo Pecho (1 Lado)", "extra": 0.00 },
+                            "pecho_espalda": { "nombre": "Pecho y Espalda (+S/ 5.00)", "extra": 5.00 }
+                        }
+                    }
+                }
             },
             "polo_sublimado": {
                 "nombre": "Polo Sublimado Premium",
-                "precios": { "unidad": 29.00, "docenas": 22.00, "ciento": 17.50 }
+                "precios": { "unidad": 29.00, "docenas": 22.00, "ciento": 17.50 },
+                "adicionales": {
+                    "estampado": {
+                        "label": "Ubicación del Estampado:",
+                        "opciones": {
+                            "pecho": { "nombre": "Solo Pecho (1 Lado)", "extra": 0.00 },
+                            "pecho_espalda": { "nombre": "Pecho y Espalda (+S/ 5.00)", "extra": 5.00 }
+                        }
+                    }
+                }
             }
         }
     }
