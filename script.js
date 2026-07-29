@@ -15,27 +15,28 @@ const cantidadInput = document.getElementById('cantidad');
 const pantallaPrecio = document.getElementById('pantalla-precio');
 
 /* ==========================================================================
-   3. FUNCIÓN REUTILIZABLE DE CÁLCULO (EL "MOTOR")
+   3. FUNCIÓN REUTILIZABLE DE CÁLCULO
    ========================================================================== */
 function calcularEnTiempoReal() {
     const modelo = tipoTaza.value;
     const cantidad = parseInt(cantidadInput.value);
 
-    /* 🔴 CONTROL DE SEGURIDAD: 
-       Si el usuario borra el número, deja el campo vacío o no ha elegido modelo,
-       reiniciamos el panel de resultados con el mensaje original y salimos. */
+    // Guardar los valores ingresados en la memoria del navegador
+    if (modelo) localStorage.setItem('rcs_modelo', modelo);
+    if (!isNaN(cantidad)) localStorage.setItem('rcs_cantidad', cantidad);
+
+    // Control de seguridad si el campo está vacío
     if (!modelo || isNaN(cantidad) || cantidad < 1) {
         pantallaPrecio.innerHTML = `
             <p style="color: #2d6a4f; font-weight: 600; margin-bottom: 0;">
                 Selecciona tus opciones para calcular el total.
             </p>
         `;
-        return; // El "return" detiene la función de inmediato
+        return;
     }
 
-    // 4. APLICACIÓN DE REGLAS DE NEGOCIO POR ESCALAS
+    // Aplicación de reglas de negocio
     let precioUnitario = 0;
-
     if (cantidad >= 100) {
         precioUnitario = tarifasRCS[modelo].ciento;
     } else if (cantidad >= 24) {
@@ -44,11 +45,10 @@ function calcularEnTiempoReal() {
         precioUnitario = tarifasRCS[modelo].unidad;
     }
 
-    // 5. CÁLCULO MATEMÁTICO
     const total = cantidad * precioUnitario;
 
-    // 6. CONSTRUCCIÓN DEL MENSAJE PARA WHATSAPP (FORMATO COMERCIAL MEJORADO)
-    const telefonoRCS = "51959562867"; // ⚠️ Tu número real aquí
+    // Mensaje para WhatsApp
+    const telefonoRCS = "51959562867"; // Tu número real aquí
     const nombreModelo = tipoTaza.options[tipoTaza.selectedIndex].text;
 
     const mensajeTexto = 
@@ -62,11 +62,10 @@ function calcularEnTiempoReal() {
         `💰 *Total Estimado:* S/ ${total.toFixed(2)}\n\n` +
         `🚀 ¿Cuáles son los pasos para realizar el abono y el tiempo estimado de entrega? ¡Quedo atento! 🙌`;
 
-    // Convertimos el mensaje en un formato seguro para URLs
     const mensajeCodificado = encodeURIComponent(mensajeTexto);
     const urlWhatsApp = `https://wa.me/${telefonoRCS}?text=${mensajeCodificado}`;
 
-    // 7. INYECCIÓN DINÁMICA EN EL HTML CON EL BOTÓN DE WHATSAPP
+    // Inyección en el HTML
     pantallaPrecio.innerHTML = `
         <div style="animation: fadeIn 0.3s ease;">
             <h3 style="color: #2d6a4f; margin-bottom: 15px; font-size: 1.2rem;">¡Cotización al Instante!</h3>
@@ -84,7 +83,6 @@ function calcularEnTiempoReal() {
                 <strong>Total Estimado:</strong> S/ ${total.toFixed(2)}
             </p>
 
-            <!-- Botón interactivo de WhatsApp -->
             <a href="${urlWhatsApp}" target="_blank" rel="noopener noreferrer" class="btn-whatsapp">
                 📲 Pedir esta cotización por WhatsApp
             </a>
@@ -93,13 +91,28 @@ function calcularEnTiempoReal() {
 }
 
 /* ==========================================================================
-   4. ESCUCHADORES DE EVENTOS EN TIEMPO REAL (HÍBRIDO COMPU/MÓVIL)
+   4. RESTAURAR DATOS AL CARGAR LA PÁGINA
    ========================================================================== */
-// Detecta cuando cambias de modelo de taza
+window.addEventListener('DOMContentLoaded', () => {
+    const modeloGuardado = localStorage.getItem('rcs_modelo');
+    const cantidadGuardada = localStorage.getItem('rcs_cantidad');
+
+    if (modeloGuardado) {
+        tipoTaza.value = modeloGuardado;
+    }
+    if (cantidadGuardada) {
+        cantidadInput.value = cantidadGuardada;
+    }
+
+    // Si ya teníamos datos guardados, calculamos la cotización de inmediato
+    if (modeloGuardado && cantidadGuardada) {
+        calcularEnTiempoReal();
+    }
+});
+
+/* ==========================================================================
+   5. ESCUCHADORES DE EVENTOS EN TIEMPO REAL
+   ========================================================================== */
 tipoTaza.addEventListener('change', calcularEnTiempoReal);
-
-// Detecta cambios en computadoras, flechas numéricas y copy-paste
 cantidadInput.addEventListener('input', calcularEnTiempoReal);
-
-// 🚀 EL TRUCO PARA CELULARES: Detecta instantáneamente cada vez que levantas el dedo del teclado virtual
 cantidadInput.addEventListener('keyup', calcularEnTiempoReal);
