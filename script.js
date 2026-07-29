@@ -119,7 +119,7 @@ function renderizarAdicionales() {
 }
 
 /* ==========================================================================
-   4. SISTEMA DE NOTIFICACIONES TOAST (VENTANA EMERGENTE ELEGANTE)
+   4. SISTEMA DE NOTIFICACIONES TOAST
    ========================================================================== */
 function lanzarToastNotificacion(titulo, mensaje, tipo = 'amber') {
     if (!toastContainer) return;
@@ -188,22 +188,16 @@ function calcularTiempoEntrega(cantidad, estadoDiseno) {
     let diasBaseMin = 0;
     let diasBaseMax = 0;
 
-    // 1. Días base según la cantidad
     if (cantidad < 24) {
-        diasBaseMin = 2;
-        diasBaseMax = 2;
+        diasBaseMin = 2; diasBaseMax = 2;
     } else if (cantidad >= 24 && cantidad <= 60) {
-        diasBaseMin = 4;
-        diasBaseMax = 4;
+        diasBaseMin = 4; diasBaseMax = 4;
     } else if (cantidad > 60 && cantidad <= 100) {
-        diasBaseMin = 6;
-        diasBaseMax = 7;
+        diasBaseMin = 6; diasBaseMax = 7;
     } else {
-        diasBaseMin = 8;
-        diasBaseMax = 10;
+        diasBaseMin = 8; diasBaseMax = 10;
     }
 
-    // 2. Días adicionales por diseño
     let diasAdicionales = 0;
     if (estadoDiseno === 'retoque') {
         diasAdicionales = 1;
@@ -218,7 +212,6 @@ function calcularTiempoEntrega(cantidad, estadoDiseno) {
         ? `${totalMin} días hábiles` 
         : `${totalMin} a ${totalMax} días hábiles`;
 
-    // 3. Evaluar horario de corte (3:00 PM / 15:00 hrs)
     const horaActual = new Date();
     let fechaInicioConteo = new Date();
     const esDespuesDeLasTres = horaActual.getHours() >= 15;
@@ -227,7 +220,6 @@ function calcularTiempoEntrega(cantidad, estadoDiseno) {
         fechaInicioConteo.setDate(fechaInicioConteo.getDate() + 1);
     }
 
-    // 4. Calcular fechas exactas omitiendo fines de semana
     const fechaMin = sumarDiasHabiles(fechaInicioConteo, totalMin);
     const fechaMax = sumarDiasHabiles(fechaInicioConteo, totalMax);
 
@@ -246,7 +238,7 @@ function calcularTiempoEntrega(cantidad, estadoDiseno) {
 }
 
 /* ==========================================================================
-   6. CÁLCULO EN TIEMPO REAL + UPSELLING + ENTREGA + WHATSAPP
+   6. CÁLCULO EN TIEMPO REAL + UPSELLING Y RENDERIZADO DE PANTALLA
    ========================================================================== */
 function calcularEnTiempoReal() {
     if (!tarifasRCS) return;
@@ -285,7 +277,6 @@ function calcularEnTiempoReal() {
     }
 
     let costoAdicionalesUnitario = 0;
-    let textoAdicionalesMensaje = '';
     let htmlAdicionalesVista = '';
 
     const selectoresAdicionales = document.querySelectorAll('.select-adicional');
@@ -295,8 +286,6 @@ function calcularEnTiempoReal() {
         costoAdicionalesUnitario += extra;
 
         const labelTexto = select.previousElementSibling.textContent.replace(':', '');
-        
-        textoAdicionalesMensaje += `🔹 *${labelTexto}:* ${opcionSeleccionada.textContent}\n`;
 
         htmlAdicionalesVista += `
             <div class="flex justify-between items-center text-xs text-slate-300 bg-slate-800/60 p-2.5 rounded-lg border border-slate-700/50">
@@ -308,25 +297,17 @@ function calcularEnTiempoReal() {
 
     const precioUnitarioFinal = precioBaseUnitario + costoAdicionalesUnitario;
     
-    // Costo por servicio de creación de diseño
     let costoDisenoExtra = 0;
-    let textoEstadoDiseno = "Diseño listo para sublimar";
-    if (estadoDiseno === 'retoque') {
-        textoEstadoDiseno = "Requiere retoque (+1 día hábil)";
-    } else if (estadoDiseno === 'creacion') {
+    if (estadoDiseno === 'creacion') {
         costoDisenoExtra = 15.00;
-        textoEstadoDiseno = "Creación desde cero (+2 días hábiles | +S/ 15.00)";
     }
 
     const subtotalProductos = cantidad * precioUnitarioFinal;
     const totalFinal = subtotalProductos + costoDisenoExtra;
 
-    // Cálculo completo del Tiempo y Fecha de Entrega
     const infoEntrega = calcularTiempoEntrega(cantidad, estadoDiseno);
 
-    /* ----------------------------------------------------------------------
-       LÓGICA DE UPSELLING Y MENSAJES INFORMATIVOS POR RANGOS DE CANTIDAD
-       ---------------------------------------------------------------------- */
+    /* --- LÓGICA DE UPSELLING --- */
     let htmlBannerUpsell = '';
     let tituloToast = '';
     let mensajeToast = '';
@@ -342,9 +323,7 @@ function calcularEnTiempoReal() {
 
         htmlBannerUpsell = `
             <div class="bg-amber-500/10 border border-amber-500/30 p-3.5 rounded-xl text-xs text-amber-300 space-y-1 my-3">
-                <div class="font-bold flex items-center gap-1.5 text-amber-400">
-                    💡 ¡Aprovecha la Tarifa por Docena!
-                </div>
+                <div class="font-bold flex items-center gap-1.5 text-amber-400">💡 ¡Aprovecha la Tarifa por Docena!</div>
                 <p class="text-slate-300 leading-snug">
                     Agrega <strong class="text-white font-bold">${faltantes} u.</strong> más para pagar solo <strong class="text-amber-400 font-bold">S/ ${nuevoPrecioUnitario.toFixed(2)}</strong> c/u (Ahorras S/ ${ahorroPorUnidad} por unidad).
                 </p>
@@ -362,9 +341,7 @@ function calcularEnTiempoReal() {
 
         htmlBannerUpsell = `
             <div class="bg-blue-500/10 border border-blue-500/30 p-3.5 rounded-xl text-xs text-blue-300 space-y-1 my-3">
-                <div class="font-bold flex items-center gap-1.5 text-blue-400">
-                    ℹ️ Tarifa Especial por Ciento
-                </div>
+                <div class="font-bold flex items-center gap-1.5 text-blue-400">ℹ️ Tarifa Especial por Ciento</div>
                 <p class="text-slate-300 leading-snug">
                     Contamos con un precio preferencial de <strong class="text-blue-400 font-bold">S/ ${precioCientoUnitario.toFixed(2)}</strong> c/u a partir de 100 unidades.
                 </p>
@@ -383,9 +360,7 @@ function calcularEnTiempoReal() {
 
         htmlBannerUpsell = `
             <div class="bg-amber-500/10 border border-amber-500/30 p-3.5 rounded-xl text-xs text-amber-300 space-y-1 my-3">
-                <div class="font-bold flex items-center gap-1.5 text-amber-400">
-                    🔥 ¡Descuento por Ciento Cercano!
-                </div>
+                <div class="font-bold flex items-center gap-1.5 text-amber-400">🔥 ¡Descuento por Ciento Cercano!</div>
                 <p class="text-slate-300 leading-snug">
                     Agrega <strong class="text-white font-bold">${faltantes} u.</strong> más para activar la tarifa al ciento: <strong class="text-amber-400 font-bold">S/ ${nuevoPrecioUnitario.toFixed(2)}</strong> c/u.
                 </p>
@@ -415,32 +390,8 @@ function calcularEnTiempoReal() {
         }, 600);
     }
 
-    /* ----------------------------------------------------------------------
-       WHATSAPP Y RENDERIZADO FINAL EN PANTALLA
-       ---------------------------------------------------------------------- */
-    const telefonoRCS = "51959562867"; 
     const nombreCat = tarifasRCS[catKey].nombre;
     const nombreProd = datosProducto.nombre;
-
-    const mensajeTexto = 
-        `✨ *¡NUEVA COTIZACIÓN DESDE LA WEB!* ✨\n\n` +
-        `👋 Hola *RCS Merchandising*, me gustaría coordinar el siguiente pedido:\n\n` +
-        `🎨 *DETALLES DEL PRODUCTO*\n` +
-        `📁 *Categoría:* ${nombreCat}\n` +
-        `🛍️ *Modelo:* ${nombreProd}\n` +
-        (textoAdicionalesMensaje ? textoAdicionalesMensaje : '') +
-        `📦 *Cantidad:* ${cantidad} unidades\n` +
-        `🖼️ *Estado del Diseño:* ${textoEstadoDiseno}\n` +
-        `🚚 *Tiempo Estimado:* ${infoEntrega.textoDias}\n` +
-        `📅 *Fecha de Entrega Prometida:* ${infoEntrega.textoFechas}\n\n` +
-        `💳 *RESUMEN DE PAGO*\n` +
-        `🏷️ *Precio Unitario:* S/ ${precioUnitarioFinal.toFixed(2)}\n` +
-        (costoDisenoExtra > 0 ? `✏️ *Diseño desde Cero:* S/ ${costoDisenoExtra.toFixed(2)}\n` : '') +
-        `💰 *Total Estimado:* S/ ${totalFinal.toFixed(2)}\n\n` +
-        `🚀 ¿Cuáles son los pasos para realizar el abono? ¡Quedo atento! 🙌`;
-
-    const mensajeCodificado = encodeURIComponent(mensajeTexto);
-    const urlWhatsApp = `https://wa.me/${telefonoRCS}?text=${mensajeCodificado}`;
 
     pantallaPrecio.innerHTML = `
         <div class="space-y-4">
@@ -474,7 +425,7 @@ function calcularEnTiempoReal() {
                 ` : ''}
             </div>
 
-            <!-- TARJETA DESTACADA DE TIEMPO Y FECHA EXACTA DE ENTREGA -->
+            <!-- TARJETA DE TIEMPO Y FECHA EXACTA DE ENTREGA -->
             <div class="bg-slate-800/90 p-3.5 rounded-xl border border-slate-700 space-y-2 text-xs">
                 <div class="flex justify-between items-center text-slate-300">
                     <span class="font-medium flex items-center gap-1.5">🚚 Tiempo estimado:</span>
@@ -489,7 +440,7 @@ function calcularEnTiempoReal() {
                 </p>
             </div>
 
-            <!-- Banner de Upselling o Informativo -->
+            <!-- Banner de Upselling -->
             ${htmlBannerUpsell}
 
             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700/80 text-center my-3">
@@ -497,17 +448,161 @@ function calcularEnTiempoReal() {
                 <span class="text-3xl font-black text-emerald-400">S/ ${totalFinal.toFixed(2)}</span>
             </div>
 
-            <a href="${urlWhatsApp}" target="_blank" rel="noopener noreferrer" 
+            <button onclick="abrirModalWhatsApp()" 
                class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-emerald-900/30 transition flex items-center justify-center gap-2 text-sm text-center">
                 <svg class="w-5 h-5 fill-current inline" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
                 Pedir esta cotización por WhatsApp
-            </a>
+            </button>
         </div>
     `;
 }
 
 /* ==========================================================================
-   7. RESTAURAR DATOS DESDE LOCALSTORAGE
+   7. GESTIÓN DEL MODAL DE DATOS DE CLIENTE Y VALIDACIONES
+   ========================================================================== */
+function abrirModalWhatsApp() {
+    const modal = document.getElementById('modal-cliente');
+    if (modal) modal.classList.remove('hidden');
+}
+
+function cerrarModalWhatsApp() {
+    const modal = document.getElementById('modal-cliente');
+    if (modal) modal.classList.add('hidden');
+}
+
+function validarYEnviarWhatsApp() {
+    const inputNombre = document.getElementById('cliente-nombre');
+    const inputDoc = document.getElementById('cliente-documento');
+    const inputTel = document.getElementById('cliente-telefono');
+    const inputCorreo = document.getElementById('cliente-correo');
+
+    const errNombre = document.getElementById('error-nombre');
+    const errDoc = document.getElementById('error-documento');
+    const errTel = document.getElementById('error-telefono');
+    const errCorreo = document.getElementById('error-correo');
+
+    // Ocultar mensajes de error previas
+    errNombre.classList.add('hidden');
+    errDoc.classList.add('hidden');
+    errTel.classList.add('hidden');
+    errCorreo.classList.add('hidden');
+
+    let esValido = true;
+
+    // 1. Validar Nombre/Razón Social (mínimo 3 caracteres)
+    const nombreVal = inputNombre.value.trim();
+    if (nombreVal.length < 3) {
+        errNombre.classList.remove('hidden');
+        esValido = false;
+    }
+
+    // 2. Validar DNI / RUC (8 u 11 dígitos numéricos o formato válido)
+    const docVal = inputDoc.value.trim();
+    const regexDoc = /^[0-9]{8,11}$/;
+    if (!regexDoc.test(docVal)) {
+        errDoc.classList.remove('hidden');
+        esValido = false;
+    }
+
+    // 3. Validar Teléfono (mínimo 9 dígitos numéricos)
+    const telVal = inputTel.value.trim();
+    const regexTel = /^[0-9\s+]{9,15}$/;
+    if (!regexTel.test(telVal)) {
+        errTel.classList.remove('hidden');
+        esValido = false;
+    }
+
+    // 4. Validar Correo (Opcional, pero si se escribe debe ser sintácticamente correcto)
+    const correoVal = inputCorreo.value.trim();
+    if (correoVal !== "") {
+        const regexCorreo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!regexCorreo.test(correoVal)) {
+            errCorreo.classList.remove('hidden');
+            esValido = false;
+        }
+    }
+
+    if (!esValido) return;
+
+    // Si todas las validaciones son exitosas, construimos y abrimos WhatsApp
+    ejecutarEnvioWhatsApp(nombreVal, docVal, telVal, correoVal);
+    cerrarModalWhatsApp();
+}
+
+function ejecutarEnvioWhatsApp(nombre, documento, telefono, correo) {
+    const catKey = categoriaSelect.value;
+    const prodKey = productoSelect.value;
+    const cantidad = parseInt(cantidadInput.value);
+    const estadoDiseno = estadoDisenoSelect ? estadoDisenoSelect.value : 'listo';
+
+    const datosProducto = tarifasRCS[catKey].productos[prodKey];
+    const escalasPrecios = datosProducto.precios;
+
+    let precioBaseUnitario = 0;
+    if (cantidad >= 100) precioBaseUnitario = escalasPrecios.ciento;
+    else if (cantidad >= 24) precioBaseUnitario = escalasPrecios.docenas;
+    else precioBaseUnitario = escalasPrecios.unidad;
+
+    let costoAdicionalesUnitario = 0;
+    let textoAdicionalesMensaje = '';
+
+    const selectoresAdicionales = document.querySelectorAll('.select-adicional');
+    selectoresAdicionales.forEach(select => {
+        const opcionSeleccionada = select.options[select.selectedIndex];
+        const extra = parseFloat(opcionSeleccionada.dataset.extra) || 0;
+        costoAdicionalesUnitario += extra;
+        const labelTexto = select.previousElementSibling.textContent.replace(':', '');
+        textoAdicionalesMensaje += `🔹 *${labelTexto}:* ${opcionSeleccionada.textContent}\n`;
+    });
+
+    const precioUnitarioFinal = precioBaseUnitario + costoAdicionalesUnitario;
+    
+    let costoDisenoExtra = 0;
+    let textoEstadoDiseno = "Diseño listo para sublimar";
+    if (estadoDiseno === 'retoque') {
+        textoEstadoDiseno = "Requiere retoque (+1 día hábil)";
+    } else if (estadoDiseno === 'creacion') {
+        costoDisenoExtra = 15.00;
+        textoEstadoDiseno = "Creación desde cero (+2 días hábiles | +S/ 15.00)";
+    }
+
+    const totalFinal = (cantidad * precioUnitarioFinal) + costoDisenoExtra;
+    const infoEntrega = calcularTiempoEntrega(cantidad, estadoDiseno);
+
+    const telefonoRCS = "51959562867"; 
+    const nombreCat = tarifasRCS[catKey].nombre;
+    const nombreProd = datosProducto.nombre;
+
+    // Mensaje de WhatsApp estructurado con sección de datos del cliente
+    const mensajeTexto = 
+        `✨ *¡NUEVA COTIZACIÓN DESDE LA WEB!* ✨\n\n` +
+        `👤 *DATOS DEL CLIENTE*\n` +
+        `📛 *Cliente:* ${nombre}\n` +
+        `🆔 *DNI / RUC:* ${documento}\n` +
+        `📞 *Teléfono:* ${telefono}\n` +
+        `✉️ *Correo:* ${correo ? correo : 'No especificado'}\n\n` +
+        `🎨 *DETALLES DEL PRODUCTO*\n` +
+        `📁 *Categoría:* ${nombreCat}\n` +
+        `🛍️ *Modelo:* ${nombreProd}\n` +
+        (textoAdicionalesMensaje ? textoAdicionalesMensaje : '') +
+        `📦 *Cantidad:* ${cantidad} unidades\n` +
+        `🖼️ *Estado del Diseño:* ${textoEstadoDiseno}\n` +
+        `🚚 *Tiempo Estimado:* ${infoEntrega.textoDias}\n` +
+        `📅 *Fecha de Entrega Prometida:* ${infoEntrega.textoFechas}\n\n` +
+        `💳 *RESUMEN DE PAGO*\n` +
+        `🏷️ *Precio Unitario:* S/ ${precioUnitarioFinal.toFixed(2)}\n` +
+        (costoDisenoExtra > 0 ? `✏️ *Diseño desde Cero:* S/ ${costoDisenoExtra.toFixed(2)}\n` : '') +
+        `💰 *Total Estimado:* S/ ${totalFinal.toFixed(2)}\n\n` +
+        `🚀 ¿Cuáles son los pasos para realizar el abono? ¡Quedo atento! 🙌`;
+
+    const mensajeCodificado = encodeURIComponent(mensajeTexto);
+    const urlWhatsApp = `https://wa.me/${telefonoRCS}?text=${mensajeCodificado}`;
+
+    window.open(urlWhatsApp, '_blank');
+}
+
+/* ==========================================================================
+   8. RESTAURAR DATOS DESDE LOCALSTORAGE
    ========================================================================== */
 function restaurarDatosGuardados() {
     const catGuardada = localStorage.getItem('rcs_categoria');
@@ -537,7 +632,7 @@ function restaurarDatosGuardados() {
 }
 
 /* ==========================================================================
-   8. ESCUCHADORES DE EVENTOS
+   9. ESCUCHADORES DE EVENTOS
    ========================================================================== */
 window.addEventListener('DOMContentLoaded', cargarTarifas);
 
