@@ -47,12 +47,28 @@ function calcularEnTiempoReal() {
     // 5. CÁLCULO MATEMÁTICO
     const total = cantidad * precioUnitario;
 
-    // 6. INYECCIÓN DINÁMICA DE RESULTADOS
+    // 6. CONSTRUCCIÓN DEL MENSAJE PARA WHATSAPP
+    const telefonoRCS = "51959562867"; // ⚠️ REEMPLAZA ESTE NÚMERO POR EL TUYO REAL (Incluye código de país, ej: 51 para Perú)
+    const nombreModelo = tipoTaza.options[tipoTaza.selectedIndex].text;
+
+    // Usamos \n para hacer saltos de línea dentro del mensaje de WhatsApp
+    const mensajeTexto = `Hola RCS Merchandising, me gustaría realizar el siguiente pedido:\n\n` +
+        `☕ *Modelo:* ${nombreModelo}\n` +
+        `📦 *Cantidad:* ${cantidad} unidades\n` +
+        `🏷️ *Precio Unitario:* S/ ${precioUnitario.toFixed(2)}\n` +
+        `💰 *Total Estimado:* S/ ${total.toFixed(2)}\n\n` +
+        `Quedo a la espera de su confirmación. ¡Muchas gracias!`;
+
+    // Convertimos el mensaje en un formato seguro para URLs
+    const mensajeCodificado = encodeURIComponent(mensajeTexto);
+    const urlWhatsApp = `https://wa.me/${telefonoRCS}?text=${mensajeCodificado}`;
+
+    // 7. INYECCIÓN DINÁMICA EN EL HTML CON EL BOTÓN DE WHATSAPP
     pantallaPrecio.innerHTML = `
         <div style="animation: fadeIn 0.3s ease;">
             <h3 style="color: #2d6a4f; margin-bottom: 15px; font-size: 1.2rem;">¡Cotización al Instante!</h3>
             <p style="color: #1e293b; margin-bottom: 8px;">
-                <strong>Modelo:</strong> ${tipoTaza.options[tipoTaza.selectedIndex].text}
+                <strong>Modelo:</strong> ${nombreModelo}
             </p>
             <p style="color: #1e293b; margin-bottom: 8px;">
                 <strong>Cantidad solicitada:</strong> ${cantidad} unidades
@@ -61,9 +77,14 @@ function calcularEnTiempoReal() {
                 <strong>Precio Unitario:</strong> S/ ${precioUnitario.toFixed(2)}
             </p>
             <hr style="border: 0; border-top: 1px solid #c8e6c9; margin: 12px 0;">
-            <p style="color: #2d6a4f; font-size: 1.4rem; font-weight: 700; margin-bottom: 0;">
+            <p style="color: #2d6a4f; font-size: 1.4rem; font-weight: 700; margin-bottom: 10px;">
                 <strong>Total Estimado:</strong> S/ ${total.toFixed(2)}
             </p>
+
+            <!-- Botón interactivo de WhatsApp -->
+            <a href="${urlWhatsApp}" target="_blank" rel="noopener noreferrer" class="btn-whatsapp">
+                📲 Pedir esta cotización por WhatsApp
+            </a>
         </div>
     `;
 }

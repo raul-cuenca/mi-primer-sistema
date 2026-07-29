@@ -232,3 +232,28 @@ footer p {
         font-size: 0.8rem;
     }
 }
+
+/* ==========================================================================
+   5. BOTÓN DE WHATSAPP
+   ========================================================================== */
+.btn-whatsapp {
+    display: block;
+    width: 100%;
+    background-color: #25D366; /* Verde oficial de WhatsApp */
+    color: #ffffff;
+    text-align: center;
+    padding: 12px 15px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 1rem;
+    text-decoration: none; /* Quita el subrayado clásico de las URLs */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    box-sizing: border-box;
+    margin-top: 15px;
+}
+
+.btn-whatsapp:hover {
+    background-color: #1da851; /* Un verde un poco más oscuro al pasar el cursor */
+    transform: translateY(-2px); /* Eleva sutilmente el botón */
+}
