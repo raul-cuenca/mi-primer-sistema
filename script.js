@@ -2,15 +2,19 @@
    1. VARIABLES GLOBALES Y CAPTURA DEL DOM
    ========================================================================== */
 let tarifasRCS = null; 
+let timerToast = null;
+let timerDebounceToast = null;
+let ultimaEscalaNotificada = ''; 
 
 const categoriaSelect = document.getElementById('categoria');
 const productoSelect = document.getElementById('tipo-producto');
 const contenedorAdicionales = document.getElementById('contenedor-adicionales');
 const cantidadInput = document.getElementById('cantidad');
 const pantallaPrecio = document.getElementById('pantalla-precio');
+const toastContainer = document.getElementById('toast-container');
 
 /* ==========================================================================
-   2. CARGA ASÍNCRONA DE DATOS (CON CACHE BUSTING ANTI-MEMORIA VIEJA)
+   2. CARGA ASÍNCRONA DE DATOS (ANTI-CACHÉ)
    ========================================================================== */
 async function cargarTarifas() {
     try {
@@ -68,7 +72,7 @@ function actualizarProductos() {
 }
 
 /* ==========================================================================
-   3. RENDERIZADO DINÁMICO DE OPCIONES ADICIONALES (CON TAILWIND)
+   3. RENDERIZADO DINÁMICO DE OPCIONES ADICIONALES
    ========================================================================== */
 function renderizarAdicionales() {
     contenedorAdicionales.innerHTML = '';
@@ -114,7 +118,49 @@ function renderizarAdicionales() {
 }
 
 /* ==========================================================================
-   4. CÁLCULO Y VISTA PREVIA COMPLETA + ENLACE A WHATSAPP
+   4. SISTEMA DE NOTIFICACIONES TOAST (VENTANA EMERGENTE ELEGANTE)
+   ========================================================================== */
+function lanzarToastNotificacion(titulo, mensaje) {
+    if (!toastContainer) return;
+
+    // Limpia notificación previa si existe
+    toastContainer.innerHTML = '';
+
+    const toast = document.createElement('div');
+    toast.className = 'pointer-events-auto bg-slate-900/95 text-white p-4 rounded-2xl shadow-2xl border border-amber-500/40 flex items-start gap-3 transform transition-all duration-500 translate-y-8 opacity-0 backdrop-blur-md';
+    
+    toast.innerHTML = `
+        <div class="bg-amber-500/20 text-amber-400 p-2 rounded-xl border border-amber-500/30 flex-shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+        </div>
+        <div class="flex-1 pr-1">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-amber-400 mb-1">${titulo}</h4>
+            <p class="text-xs text-slate-200 leading-relaxed font-medium">${mensaje}</p>
+        </div>
+        <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-white transition text-xs font-bold p-1">✕</button>
+    `;
+
+    toastContainer.appendChild(toast);
+
+    // Animación de Entrada
+    setTimeout(() => {
+        toast.classList.remove('translate-y-8', 'opacity-0');
+        toast.classList.add('translate-y-0', 'opacity-100');
+    }, 50);
+
+    // Transición de Salida tras 4.5 segundos
+    if (timerToast) clearTimeout(timerToast);
+    timerToast = setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-8', 'opacity-0');
+        setTimeout(() => toast.remove(), 500);
+    }, 4500);
+}
+
+/* ==========================================================================
+   5. CÁLCULO EN TIEMPO REAL + UPSELLING + RESUMEN + WHATSAPP
    ========================================================================== */
 function calcularEnTiempoReal() {
     if (!tarifasRCS) return;
@@ -162,10 +208,8 @@ function calcularEnTiempoReal() {
 
         const labelTexto = select.previousElementSibling.textContent.replace(':', '');
         
-        // Texto para el mensaje de WhatsApp
         textoAdicionalesMensaje += `🔹 *${labelTexto}:* ${opcionSeleccionada.textContent}\n`;
 
-        // Vista dinámica en la pantalla de la web
         htmlAdicionalesVista += `
             <div class="flex justify-between items-center text-xs text-slate-300 bg-slate-800/60 p-2.5 rounded-lg border border-slate-700/50">
                 <span class="font-medium">${labelTexto}:</span>
@@ -177,7 +221,76 @@ function calcularEnTiempoReal() {
     const precioUnitarioFinal = precioBaseUnitario + costoAdicionalesUnitario;
     const total = cantidad * precioUnitarioFinal;
 
-    const telefonoRCS = "51959562867"; // Reemplaza por tu número oficial de WhatsApp
+    /* ----------------------------------------------------------------------
+       LÓGICA DE UPSELLING (DESCUENTO POR VOLUMEN)
+       ---------------------------------------------------------------------- */
+    let htmlBannerUpsell = '';
+    let tituloToast = '';
+    let mensajeToast = '';
+    let idEscalaActual = '';
+
+    if (cantidad < 24) {
+        const faltantes = 24 - cantidad;
+        const nuevoPrecioUnitario = escalasPrecios.docenas + costoAdicionalesUnitario;
+        const ahorroPorUnidad = (precioUnitarioFinal - nuevoPrecioUnitario).toFixed(2);
+        idEscalaActual = `docena-${prodKey}-${cantidad}`;
+
+        htmlBannerUpsell = `
+            <div class="bg-amber-500/10 border border-amber-500/30 p-3.5 rounded-xl text-xs text-amber-300 space-y-1 my-3">
+                <div class="font-bold flex items-center gap-1.5 text-amber-400">
+                    💡 ¡Aprovecha la Tarifa por Docena!
+                </div>
+                <p class="text-slate-300 leading-snug">
+                    Agrega <strong class="text-white font-bold">${faltantes} u.</strong> más para pagar solo <strong class="text-amber-400 font-bold">S/ ${nuevoPrecioUnitario.toFixed(2)}</strong> c/u (Ahorras S/ ${ahorroPorUnidad} por unidad).
+                </p>
+            </div>
+        `;
+
+        tituloToast = "💡 Oportunidad de Ahorro";
+        mensajeToast = `¡Estás a solo <strong>${faltantes} unidades</strong> de activar la tarifa por docena! El precio baja a <strong>S/ ${nuevoPrecioUnitario.toFixed(2)}</strong> c/u.`;
+
+    } else if (cantidad >= 24 && cantidad < 100) {
+        const faltantes = 100 - cantidad;
+        const nuevoPrecioUnitario = escalasPrecios.ciento + costoAdicionalesUnitario;
+        const ahorroPorUnidad = (precioUnitarioFinal - nuevoPrecioUnitario).toFixed(2);
+        idEscalaActual = `ciento-${prodKey}-${cantidad}`;
+
+        htmlBannerUpsell = `
+            <div class="bg-amber-500/10 border border-amber-500/30 p-3.5 rounded-xl text-xs text-amber-300 space-y-1 my-3">
+                <div class="font-bold flex items-center gap-1.5 text-amber-400">
+                    🔥 ¡Descuento por Ciento Disponible!
+                </div>
+                <p class="text-slate-300 leading-snug">
+                    Agrega <strong class="text-white font-bold">${faltantes} u.</strong> más para activar el precio al ciento: <strong class="text-amber-400 font-bold">S/ ${nuevoPrecioUnitario.toFixed(2)}</strong> c/u.
+                </p>
+            </div>
+        `;
+
+        tituloToast = "🔥 ¡Mayor Descuento!";
+        mensajeToast = `Agrega <strong>${faltantes} unidades</strong> más para desbloquear la tarifa por ciento (<strong>S/ ${nuevoPrecioUnitario.toFixed(2)}</strong> c/u).`;
+
+    } else {
+        idEscalaActual = `maximo-${prodKey}`;
+        htmlBannerUpsell = `
+            <div class="bg-emerald-500/10 border border-emerald-500/30 p-3 rounded-xl text-xs text-emerald-300 text-center font-semibold my-3">
+                🎉 ¡Felicidades! Tienes activada la tarifa de Máximo Descuento por Ciento.
+            </div>
+        `;
+    }
+
+    // Disparar la Notificación Toast (con Debounce para no molestar mientras escribe rápido)
+    if (idEscalaActual !== ultimaEscalaNotificada && (cantidad < 100)) {
+        clearTimeout(timerDebounceToast);
+        timerDebounceToast = setTimeout(() => {
+            lanzarToastNotificacion(tituloToast, mensajeToast);
+            ultimaEscalaNotificada = idEscalaActual;
+        }, 600);
+    }
+
+    /* ----------------------------------------------------------------------
+       WHATSAPP Y RENDERIZADO FINAL EN PANTALLA
+       ---------------------------------------------------------------------- */
+    const telefonoRCS = "51959562867"; // Reemplaza por tu número oficial
     const nombreCat = tarifasRCS[catKey].nombre;
     const nombreProd = datosProducto.nombre;
 
@@ -197,7 +310,6 @@ function calcularEnTiempoReal() {
     const mensajeCodificado = encodeURIComponent(mensajeTexto);
     const urlWhatsApp = `https://wa.me/${telefonoRCS}?text=${mensajeCodificado}`;
 
-    // Inyección de la tarjeta de resumen en el DOM
     pantallaPrecio.innerHTML = `
         <div class="space-y-4">
             <div class="space-y-2">
@@ -224,7 +336,10 @@ function calcularEnTiempoReal() {
                 </div>
             </div>
 
-            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700/80 text-center my-4">
+            <!-- Banner Fijo de Upselling en la Tarjeta -->
+            ${htmlBannerUpsell}
+
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700/80 text-center my-3">
                 <span class="block text-xs uppercase tracking-wider text-slate-400 mb-1">Monto Total Estimado</span>
                 <span class="text-3xl font-black text-emerald-400">S/ ${total.toFixed(2)}</span>
             </div>
@@ -239,7 +354,7 @@ function calcularEnTiempoReal() {
 }
 
 /* ==========================================================================
-   5. RESTAURAR DATOS DESDE LOCALSTORAGE
+   6. RESTAURAR DATOS DESDE LOCALSTORAGE
    ========================================================================== */
 function restaurarDatosGuardados() {
     const catGuardada = localStorage.getItem('rcs_categoria');
@@ -264,7 +379,7 @@ function restaurarDatosGuardados() {
 }
 
 /* ==========================================================================
-   6. ESCUCHADORES DE EVENTOS
+   7. ESCUCHADORES DE EVENTOS
    ========================================================================== */
 window.addEventListener('DOMContentLoaded', cargarTarifas);
 
@@ -272,10 +387,12 @@ categoriaSelect.addEventListener('change', () => {
     cantidadInput.value = '';
     localStorage.removeItem('rcs_cantidad');
     localStorage.removeItem('rcs_producto');
+    ultimaEscalaNotificada = '';
     actualizarProductos();
 });
 
 productoSelect.addEventListener('change', () => {
+    ultimaEscalaNotificada = '';
     renderizarAdicionales();
     calcularEnTiempoReal();
 });
