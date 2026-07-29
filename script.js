@@ -10,6 +10,7 @@ const categoriaSelect = document.getElementById('categoria');
 const productoSelect = document.getElementById('tipo-producto');
 const contenedorAdicionales = document.getElementById('contenedor-adicionales');
 const cantidadInput = document.getElementById('cantidad');
+const estadoDisenoSelect = document.getElementById('estado-diseno');
 const pantallaPrecio = document.getElementById('pantalla-precio');
 const toastContainer = document.getElementById('toast-container');
 
@@ -123,7 +124,6 @@ function renderizarAdicionales() {
 function lanzarToastNotificacion(titulo, mensaje, tipo = 'amber') {
     if (!toastContainer) return;
 
-    // Limpia notificación previa si existe
     toastContainer.innerHTML = '';
 
     const colorBorde = tipo === 'blue' ? 'border-blue-500/40' : 'border-amber-500/40';
@@ -148,13 +148,11 @@ function lanzarToastNotificacion(titulo, mensaje, tipo = 'amber') {
 
     toastContainer.appendChild(toast);
 
-    // Animación de Entrada
     setTimeout(() => {
         toast.classList.remove('translate-y-8', 'opacity-0');
         toast.classList.add('translate-y-0', 'opacity-100');
     }, 50);
 
-    // Transición de Salida tras 4.5 segundos
     if (timerToast) clearTimeout(timerToast);
     timerToast = setTimeout(() => {
         toast.classList.remove('translate-y-0', 'opacity-100');
@@ -164,7 +162,91 @@ function lanzarToastNotificacion(titulo, mensaje, tipo = 'amber') {
 }
 
 /* ==========================================================================
-   5. CÁLCULO EN TIEMPO REAL + UPSELLING + RESUMEN + WHATSAPP
+   5. FUNCIONES AUXILIARES DE CÁLCULO Y FORMATO DE FECHAS HÁBILES
+   ========================================================================== */
+function sumarDiasHabiles(fechaInicial, diasAñadir) {
+    let fecha = new Date(fechaInicial);
+    let diasSumados = 0;
+    
+    while (diasSumados < diasAñadir) {
+        fecha.setDate(fecha.getDate() + 1);
+        const diaSemana = fecha.getDay(); // 0 = Domingo, 6 = Sábado
+        if (diaSemana !== 0 && diaSemana !== 6) {
+            diasSumados++;
+        }
+    }
+    return fecha;
+}
+
+function formatearFechaElegante(fecha) {
+    const opciones = { weekday: 'long', day: 'numeric', month: 'long' };
+    let str = fecha.toLocaleDateString('es-ES', opciones);
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+function calcularTiempoEntrega(cantidad, estadoDiseno) {
+    let diasBaseMin = 0;
+    let diasBaseMax = 0;
+
+    // 1. Días base según la cantidad
+    if (cantidad < 24) {
+        diasBaseMin = 2;
+        diasBaseMax = 2;
+    } else if (cantidad >= 24 && cantidad <= 60) {
+        diasBaseMin = 4;
+        diasBaseMax = 4;
+    } else if (cantidad > 60 && cantidad <= 100) {
+        diasBaseMin = 6;
+        diasBaseMax = 7;
+    } else {
+        diasBaseMin = 8;
+        diasBaseMax = 10;
+    }
+
+    // 2. Días adicionales por diseño
+    let diasAdicionales = 0;
+    if (estadoDiseno === 'retoque') {
+        diasAdicionales = 1;
+    } else if (estadoDiseno === 'creacion') {
+        diasAdicionales = 2;
+    }
+
+    const totalMin = diasBaseMin + diasAdicionales;
+    const totalMax = diasBaseMax + diasAdicionales;
+
+    const textoDias = (totalMin === totalMax) 
+        ? `${totalMin} días hábiles` 
+        : `${totalMin} a ${totalMax} días hábiles`;
+
+    // 3. Evaluar horario de corte (3:00 PM / 15:00 hrs)
+    const horaActual = new Date();
+    let fechaInicioConteo = new Date();
+    const esDespuesDeLasTres = horaActual.getHours() >= 15;
+
+    if (esDespuesDeLasTres) {
+        fechaInicioConteo.setDate(fechaInicioConteo.getDate() + 1);
+    }
+
+    // 4. Calcular fechas exactas omitiendo fines de semana
+    const fechaMin = sumarDiasHabiles(fechaInicioConteo, totalMin);
+    const fechaMax = sumarDiasHabiles(fechaInicioConteo, totalMax);
+
+    let textoFechas = '';
+    if (totalMin === totalMax) {
+        textoFechas = formatearFechaElegante(fechaMin);
+    } else {
+        textoFechas = `Del ${formatearFechaElegante(fechaMin)} al ${formatearFechaElegante(fechaMax)}`;
+    }
+
+    return {
+        textoDias: textoDias,
+        textoFechas: textoFechas,
+        esDespuesDeLasTres: esDespuesDeLasTres
+    };
+}
+
+/* ==========================================================================
+   6. CÁLCULO EN TIEMPO REAL + UPSELLING + ENTREGA + WHATSAPP
    ========================================================================== */
 function calcularEnTiempoReal() {
     if (!tarifasRCS) return;
@@ -172,10 +254,12 @@ function calcularEnTiempoReal() {
     const catKey = categoriaSelect.value;
     const prodKey = productoSelect.value;
     const cantidad = parseInt(cantidadInput.value);
+    const estadoDiseno = estadoDisenoSelect ? estadoDisenoSelect.value : 'listo';
 
     if (catKey) localStorage.setItem('rcs_categoria', catKey);
     if (prodKey) localStorage.setItem('rcs_producto', prodKey);
     if (!isNaN(cantidad)) localStorage.setItem('rcs_cantidad', cantidad);
+    if (estadoDiseno) localStorage.setItem('rcs_diseno', estadoDiseno);
 
     if (!catKey || !prodKey || isNaN(cantidad) || cantidad < 1) {
         pantallaPrecio.innerHTML = `
@@ -223,7 +307,22 @@ function calcularEnTiempoReal() {
     });
 
     const precioUnitarioFinal = precioBaseUnitario + costoAdicionalesUnitario;
-    const total = cantidad * precioUnitarioFinal;
+    
+    // Costo por servicio de creación de diseño
+    let costoDisenoExtra = 0;
+    let textoEstadoDiseno = "Diseño listo para sublimar";
+    if (estadoDiseno === 'retoque') {
+        textoEstadoDiseno = "Requiere retoque (+1 día hábil)";
+    } else if (estadoDiseno === 'creacion') {
+        costoDisenoExtra = 15.00;
+        textoEstadoDiseno = "Creación desde cero (+2 días hábiles | +S/ 15.00)";
+    }
+
+    const subtotalProductos = cantidad * precioUnitarioFinal;
+    const totalFinal = subtotalProductos + costoDisenoExtra;
+
+    // Cálculo completo del Tiempo y Fecha de Entrega
+    const infoEntrega = calcularTiempoEntrega(cantidad, estadoDiseno);
 
     /* ----------------------------------------------------------------------
        LÓGICA DE UPSELLING Y MENSAJES INFORMATIVOS POR RANGOS DE CANTIDAD
@@ -235,7 +334,6 @@ function calcularEnTiempoReal() {
     let tipoToast = 'amber';
     let dispararToast = false;
 
-    // RANGO 1: 1 a 23 Unidades (Sugerir tarifa por docena)
     if (cantidad < 24) {
         const faltantes = 24 - cantidad;
         const nuevoPrecioUnitario = escalasPrecios.docenas + costoAdicionalesUnitario;
@@ -258,7 +356,6 @@ function calcularEnTiempoReal() {
         tipoToast = 'amber';
         dispararToast = true;
 
-    // RANGO 2: 25 a 49 Unidades (Solo información sutil sobre el ciento, sin exigir cantidad)
     } else if (cantidad >= 24 && cantidad <= 49) {
         const precioCientoUnitario = escalasPrecios.ciento + costoAdicionalesUnitario;
         idEscalaActual = `info-ciento-${prodKey}`;
@@ -279,7 +376,6 @@ function calcularEnTiempoReal() {
         tipoToast = 'blue';
         dispararToast = true;
 
-    // RANGO 3: 50 a 99 Unidades (Sugerir activar la tarifa al ciento mostrando faltantes)
     } else if (cantidad >= 50 && cantidad < 100) {
         const faltantes = 100 - cantidad;
         const nuevoPrecioUnitario = escalasPrecios.ciento + costoAdicionalesUnitario;
@@ -301,7 +397,6 @@ function calcularEnTiempoReal() {
         tipoToast = 'amber';
         dispararToast = true;
 
-    // RANGO 4: 100+ Unidades (Máximo Descuento Alcanzado)
     } else {
         idEscalaActual = `maximo-${prodKey}`;
         htmlBannerUpsell = `
@@ -312,7 +407,6 @@ function calcularEnTiempoReal() {
         dispararToast = false;
     }
 
-    // Disparar Notificación Flotante con Debounce
     if (dispararToast && idEscalaActual !== ultimaEscalaNotificada) {
         clearTimeout(timerDebounceToast);
         timerDebounceToast = setTimeout(() => {
@@ -336,10 +430,14 @@ function calcularEnTiempoReal() {
         `🛍️ *Modelo:* ${nombreProd}\n` +
         (textoAdicionalesMensaje ? textoAdicionalesMensaje : '') +
         `📦 *Cantidad:* ${cantidad} unidades\n` +
-        `🏷️ *Precio Unitario Total:* S/ ${precioUnitarioFinal.toFixed(2)}\n\n` +
+        `🖼️ *Estado del Diseño:* ${textoEstadoDiseno}\n` +
+        `🚚 *Tiempo Estimado:* ${infoEntrega.textoDias}\n` +
+        `📅 *Fecha de Entrega Prometida:* ${infoEntrega.textoFechas}\n\n` +
         `💳 *RESUMEN DE PAGO*\n` +
-        `💰 *Total Estimado:* S/ ${total.toFixed(2)}\n\n` +
-        `🚀 ¿Cuáles son los pasos para realizar el abono y el tiempo estimado de entrega? ¡Quedo atento! 🙌`;
+        `🏷️ *Precio Unitario:* S/ ${precioUnitarioFinal.toFixed(2)}\n` +
+        (costoDisenoExtra > 0 ? `✏️ *Diseño desde Cero:* S/ ${costoDisenoExtra.toFixed(2)}\n` : '') +
+        `💰 *Total Estimado:* S/ ${totalFinal.toFixed(2)}\n\n` +
+        `🚀 ¿Cuáles son los pasos para realizar el abono? ¡Quedo atento! 🙌`;
 
     const mensajeCodificado = encodeURIComponent(mensajeTexto);
     const urlWhatsApp = `https://wa.me/${telefonoRCS}?text=${mensajeCodificado}`;
@@ -359,7 +457,7 @@ function calcularEnTiempoReal() {
 
             ${htmlAdicionalesVista ? `<div class="space-y-2 pt-1 border-t border-slate-800">${htmlAdicionalesVista}</div>` : ''}
 
-            <div class="pt-2 border-t border-slate-800 space-y-1">
+            <div class="pt-2 border-t border-slate-800 space-y-1.5">
                 <div class="flex justify-between items-center text-xs text-slate-400">
                     <span>Cantidad:</span>
                     <span class="font-bold text-white">${cantidad} unidades</span>
@@ -368,6 +466,27 @@ function calcularEnTiempoReal() {
                     <span>Precio Unitario:</span>
                     <span class="font-bold text-white">S/ ${precioUnitarioFinal.toFixed(2)}</span>
                 </div>
+                ${costoDisenoExtra > 0 ? `
+                <div class="flex justify-between items-center text-xs text-amber-300">
+                    <span>Servicio de Diseño:</span>
+                    <span class="font-bold">+ S/ ${costoDisenoExtra.toFixed(2)}</span>
+                </div>
+                ` : ''}
+            </div>
+
+            <!-- TARJETA DESTACADA DE TIEMPO Y FECHA EXACTA DE ENTREGA -->
+            <div class="bg-slate-800/90 p-3.5 rounded-xl border border-slate-700 space-y-2 text-xs">
+                <div class="flex justify-between items-center text-slate-300">
+                    <span class="font-medium flex items-center gap-1.5">🚚 Tiempo estimado:</span>
+                    <span class="font-bold text-blue-400">${infoEntrega.textoDias}</span>
+                </div>
+                <div class="pt-2 border-t border-slate-700/60 flex justify-between items-center">
+                    <span class="text-slate-400 font-medium">📅 Fecha de entrega:</span>
+                    <span class="font-bold text-amber-300 text-right">${infoEntrega.textoFechas}</span>
+                </div>
+                <p class="text-[10px] text-slate-400 italic text-right pt-0.5">
+                    * Pedido ${infoEntrega.esDespuesDeLasTres ? 'después de las 3:00 PM (conteo desde mañana)' : 'antes de las 3:00 PM (conteo desde hoy)'}
+                </p>
             </div>
 
             <!-- Banner de Upselling o Informativo -->
@@ -375,7 +494,7 @@ function calcularEnTiempoReal() {
 
             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700/80 text-center my-3">
                 <span class="block text-xs uppercase tracking-wider text-slate-400 mb-1">Monto Total Estimado</span>
-                <span class="text-3xl font-black text-emerald-400">S/ ${total.toFixed(2)}</span>
+                <span class="text-3xl font-black text-emerald-400">S/ ${totalFinal.toFixed(2)}</span>
             </div>
 
             <a href="${urlWhatsApp}" target="_blank" rel="noopener noreferrer" 
@@ -388,12 +507,13 @@ function calcularEnTiempoReal() {
 }
 
 /* ==========================================================================
-   6. RESTAURAR DATOS DESDE LOCALSTORAGE
+   7. RESTAURAR DATOS DESDE LOCALSTORAGE
    ========================================================================== */
 function restaurarDatosGuardados() {
     const catGuardada = localStorage.getItem('rcs_categoria');
     const prodGuardado = localStorage.getItem('rcs_producto');
     const cantidadGuardada = localStorage.getItem('rcs_cantidad');
+    const disenoGuardado = localStorage.getItem('rcs_diseno');
 
     if (catGuardada && tarifasRCS[catGuardada]) {
         categoriaSelect.value = catGuardada;
@@ -409,11 +529,15 @@ function restaurarDatosGuardados() {
         cantidadInput.value = cantidadGuardada;
     }
 
+    if (disenoGuardado && estadoDisenoSelect) {
+        estadoDisenoSelect.value = disenoGuardado;
+    }
+
     calcularEnTiempoReal();
 }
 
 /* ==========================================================================
-   7. ESCUCHADORES DE EVENTOS
+   8. ESCUCHADORES DE EVENTOS
    ========================================================================== */
 window.addEventListener('DOMContentLoaded', cargarTarifas);
 
@@ -433,3 +557,7 @@ productoSelect.addEventListener('change', () => {
 
 cantidadInput.addEventListener('input', calcularEnTiempoReal);
 cantidadInput.addEventListener('keyup', calcularEnTiempoReal);
+
+if (estadoDisenoSelect) {
+    estadoDisenoSelect.addEventListener('change', calcularEnTiempoReal);
+}
