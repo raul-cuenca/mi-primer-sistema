@@ -47,17 +47,20 @@ function calcularEnTiempoReal() {
     // 5. CÁLCULO MATEMÁTICO
     const total = cantidad * precioUnitario;
 
-    // 6. CONSTRUCCIÓN DEL MENSAJE PARA WHATSAPP
-    const telefonoRCS = "51959562867"; // ⚠️ REEMPLAZA ESTE NÚMERO POR EL TUYO REAL (Incluye código de país, ej: 51 para Perú)
+    // 6. CONSTRUCCIÓN DEL MENSAJE PARA WHATSAPP (FORMATO COMERCIAL MEJORADO)
+    const telefonoRCS = "51959562867"; // ⚠️ Tu número real aquí
     const nombreModelo = tipoTaza.options[tipoTaza.selectedIndex].text;
 
-    // Usamos \n para hacer saltos de línea dentro del mensaje de WhatsApp
-    const mensajeTexto = `Hola RCS Merchandising, me gustaría realizar el siguiente pedido:\n\n` +
+    const mensajeTexto = 
+        `✨ *¡NUEVA COTIZACIÓN DESDE LA WEB!* ✨\n\n` +
+        `👋 Hola *RCS Merchandising*, acabo de calcular una cotización en su sistema y me gustaría coordinar mi pedido:\n\n` +
+        `🎨 *DETALLES DEL PRODUCTO*\n` +
         `☕ *Modelo:* ${nombreModelo}\n` +
         `📦 *Cantidad:* ${cantidad} unidades\n` +
-        `🏷️ *Precio Unitario:* S/ ${precioUnitario.toFixed(2)}\n` +
+        `🏷️ *Precio Unitario:* S/ ${precioUnitario.toFixed(2)}\n\n` +
+        `💳 *RESUMEN DE PAGO*\n` +
         `💰 *Total Estimado:* S/ ${total.toFixed(2)}\n\n` +
-        `Quedo a la espera de su confirmación. ¡Muchas gracias!`;
+        `🚀 ¿Cuáles son los pasos para realizar el abono y el tiempo estimado de entrega? ¡Quedo atento! 🙌`;
 
     // Convertimos el mensaje en un formato seguro para URLs
     const mensajeCodificado = encodeURIComponent(mensajeTexto);
