@@ -7,10 +7,13 @@
                 "precios": { "unidad": 7.00, "docenas": 6.50, "ciento": 5.90 },
                 "adicionales": {
                     "color": {
-                        "label": "Acabado de Color Interno:",
+                        "label": "Color Interno de la Taza:",
                         "opciones": {
-                            "blanco": { "nombre": "Blanco Clásico (Sin costo extra)", "extra": 0.00 },
-                            "color_interno": { "nombre": "Color Interno (Rojo, Verde, Amarillo, Celeste, etc.) (+S/ 0.50)", "extra": 0.50 }
+                            "blanco": { "nombre": "Blanco Clásico (Interior Blanco)", "extra": 0.00 },
+                            "rojo": { "nombre": "Rojo (+S/ 0.50)", "extra": 0.50 },
+                            "verde": { "nombre": "Verde (+S/ 0.50)", "extra": 0.50 },
+                            "amarillo": { "nombre": "Amarillo (+S/ 0.50)", "extra": 0.50 },
+                            "celeste": { "nombre": "Celeste (+S/ 0.50)", "extra": 0.50 }
                         }
                     },
                     "empaque": {
@@ -28,10 +31,13 @@
                 "precios": { "unidad": 11.90, "docenas": 10.50, "ciento": 9.90 },
                 "adicionales": {
                     "color": {
-                        "label": "Acabado de Color Interno:",
+                        "label": "Color Interno de la Taza:",
                         "opciones": {
-                            "blanco": { "nombre": "Blanco Clásico (Sin costo extra)", "extra": 0.00 },
-                            "color_interno": { "nombre": "Color Interno (Rojo, Verde, Amarillo, Celeste, etc.) (+S/ 0.50)", "extra": 0.50 }
+                            "blanco": { "nombre": "Blanco Clásico (Interior Blanco)", "extra": 0.00 },
+                            "rojo": { "nombre": "Rojo (+S/ 0.50)", "extra": 0.50 },
+                            "verde": { "nombre": "Verde (+S/ 0.50)", "extra": 0.50 },
+                            "amarillo": { "nombre": "Amarillo (+S/ 0.50)", "extra": 0.50 },
+                            "celeste": { "nombre": "Celeste (+S/ 0.50)", "extra": 0.50 }
                         }
                     },
                     "empaque": {
