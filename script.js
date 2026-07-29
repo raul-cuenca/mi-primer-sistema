@@ -14,7 +14,6 @@ const pantallaPrecio = document.getElementById('pantalla-precio');
    ========================================================================== */
 async function cargarTarifas() {
     try {
-        // ⚡ Agregamos ?v=timestamp para obligar a descargar el JSON más fresco siempre
         const respuesta = await fetch('precios.json?v=' + new Date().getTime());
         if (!respuesta.ok) throw new Error("No se pudo cargar el JSON");
 
@@ -46,7 +45,7 @@ function poblarCategorias() {
 function actualizarProductos() {
     const catSeleccionada = categoriaSelect.value;
     productoSelect.innerHTML = '<option value="">-- Selecciona Modelo --</option>';
-    contenedorAdicionales.innerHTML = ''; // Limpia adicionales anteriores
+    contenedorAdicionales.innerHTML = ''; 
 
     if (!catSeleccionada || !tarifasRCS[catSeleccionada]) {
         productoSelect.disabled = true;
@@ -115,7 +114,7 @@ function renderizarAdicionales() {
 }
 
 /* ==========================================================================
-   4. CÁLCULO Y MENSAJE DE WHATSAPP
+   4. CÁLCULO Y VISTA PREVIA COMPLETA + WHATSAPP
    ========================================================================== */
 function calcularEnTiempoReal() {
     if (!tarifasRCS) return;
@@ -151,6 +150,7 @@ function calcularEnTiempoReal() {
 
     let costoAdicionalesUnitario = 0;
     let textoAdicionalesMensaje = '';
+    let htmlAdicionalesVista = ''; // 👈 Variable para renderizar en la pantalla web
 
     const selectoresAdicionales = document.querySelectorAll('.select-adicional');
     selectoresAdicionales.forEach(select => {
@@ -159,13 +159,22 @@ function calcularEnTiempoReal() {
         costoAdicionalesUnitario += extra;
 
         const labelTexto = select.previousElementSibling.textContent.replace(':', '');
+        
+        // Formato para WhatsApp
         textoAdicionalesMensaje += `🔹 *${labelTexto}:* ${opcionSeleccionada.textContent}\n`;
+
+        // Formato para la Vista Web Previa
+        htmlAdicionalesVista += `
+            <p style="color: #1e293b; margin-bottom: 8px;">
+                <strong>${labelTexto}:</strong> ${opcionSeleccionada.textContent}
+            </p>
+        `;
     });
 
     const precioUnitarioFinal = precioBaseUnitario + costoAdicionalesUnitario;
     const total = cantidad * precioUnitarioFinal;
 
-    const telefonoRCS = "51959562867"; // Tu número aquí
+    const telefonoRCS = "51959562867"; // Tu número de WhatsApp
     const nombreCat = tarifasRCS[catKey].nombre;
     const nombreProd = datosProducto.nombre;
 
@@ -185,6 +194,7 @@ function calcularEnTiempoReal() {
     const mensajeCodificado = encodeURIComponent(mensajeTexto);
     const urlWhatsApp = `https://wa.me/${telefonoRCS}?text=${mensajeCodificado}`;
 
+    // 🖥️ INYECCIÓN EN PANTALLA (INCLUYE ADICIONALES)
     pantallaPrecio.innerHTML = `
         <div style="animation: fadeIn 0.3s ease;">
             <h3 style="color: #2d6a4f; margin-bottom: 15px; font-size: 1.2rem;">¡Cotización al Instante!</h3>
@@ -194,6 +204,7 @@ function calcularEnTiempoReal() {
             <p style="color: #1e293b; margin-bottom: 8px;">
                 <strong>Modelo:</strong> ${nombreProd}
             </p>
+            ${htmlAdicionalesVista}
             <p style="color: #1e293b; margin-bottom: 8px;">
                 <strong>Cantidad solicitada:</strong> ${cantidad} unidades
             </p>
