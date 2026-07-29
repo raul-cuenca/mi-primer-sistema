@@ -120,23 +120,27 @@ function renderizarAdicionales() {
 /* ==========================================================================
    4. SISTEMA DE NOTIFICACIONES TOAST (VENTANA EMERGENTE ELEGANTE)
    ========================================================================== */
-function lanzarToastNotificacion(titulo, mensaje) {
+function lanzarToastNotificacion(titulo, mensaje, tipo = 'amber') {
     if (!toastContainer) return;
 
     // Limpia notificación previa si existe
     toastContainer.innerHTML = '';
 
+    const colorBorde = tipo === 'blue' ? 'border-blue-500/40' : 'border-amber-500/40';
+    const colorIconoBg = tipo === 'blue' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+    const colorTitulo = tipo === 'blue' ? 'text-blue-400' : 'text-amber-400';
+
     const toast = document.createElement('div');
-    toast.className = 'pointer-events-auto bg-slate-900/95 text-white p-4 rounded-2xl shadow-2xl border border-amber-500/40 flex items-start gap-3 transform transition-all duration-500 translate-y-8 opacity-0 backdrop-blur-md';
+    toast.className = `pointer-events-auto bg-slate-900/95 text-white p-4 rounded-2xl shadow-2xl border ${colorBorde} flex items-start gap-3 transform transition-all duration-500 translate-y-8 opacity-0 backdrop-blur-md`;
     
     toast.innerHTML = `
-        <div class="bg-amber-500/20 text-amber-400 p-2 rounded-xl border border-amber-500/30 flex-shrink-0">
+        <div class="${colorIconoBg} p-2 rounded-xl border flex-shrink-0">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
             </svg>
         </div>
         <div class="flex-1 pr-1">
-            <h4 class="text-xs font-bold uppercase tracking-wider text-amber-400 mb-1">${titulo}</h4>
+            <h4 class="text-xs font-bold uppercase tracking-wider ${colorTitulo} mb-1">${titulo}</h4>
             <p class="text-xs text-slate-200 leading-relaxed font-medium">${mensaje}</p>
         </div>
         <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-white transition text-xs font-bold p-1">✕</button>
@@ -222,13 +226,16 @@ function calcularEnTiempoReal() {
     const total = cantidad * precioUnitarioFinal;
 
     /* ----------------------------------------------------------------------
-       LÓGICA DE UPSELLING (DESCUENTO POR VOLUMEN)
+       LÓGICA DE UPSELLING Y MENSAJES INFORMATIVOS POR RANGOS DE CANTIDAD
        ---------------------------------------------------------------------- */
     let htmlBannerUpsell = '';
     let tituloToast = '';
     let mensajeToast = '';
     let idEscalaActual = '';
+    let tipoToast = 'amber';
+    let dispararToast = false;
 
+    // RANGO 1: 1 a 23 Unidades (Sugerir tarifa por docena)
     if (cantidad < 24) {
         const faltantes = 24 - cantidad;
         const nuevoPrecioUnitario = escalasPrecios.docenas + costoAdicionalesUnitario;
@@ -248,27 +255,53 @@ function calcularEnTiempoReal() {
 
         tituloToast = "💡 Oportunidad de Ahorro";
         mensajeToast = `¡Estás a solo <strong>${faltantes} unidades</strong> de activar la tarifa por docena! El precio baja a <strong>S/ ${nuevoPrecioUnitario.toFixed(2)}</strong> c/u.`;
+        tipoToast = 'amber';
+        dispararToast = true;
 
-    } else if (cantidad >= 24 && cantidad < 100) {
+    // RANGO 2: 25 a 49 Unidades (Solo información sutil sobre el ciento, sin exigir cantidad)
+    } else if (cantidad >= 24 && cantidad <= 49) {
+        const precioCientoUnitario = escalasPrecios.ciento + costoAdicionalesUnitario;
+        idEscalaActual = `info-ciento-${prodKey}`;
+
+        htmlBannerUpsell = `
+            <div class="bg-blue-500/10 border border-blue-500/30 p-3.5 rounded-xl text-xs text-blue-300 space-y-1 my-3">
+                <div class="font-bold flex items-center gap-1.5 text-blue-400">
+                    ℹ️ Tarifa Especial por Ciento
+                </div>
+                <p class="text-slate-300 leading-snug">
+                    Contamos con un precio preferencial de <strong class="text-blue-400 font-bold">S/ ${precioCientoUnitario.toFixed(2)}</strong> c/u a partir de 100 unidades.
+                </p>
+            </div>
+        `;
+
+        tituloToast = "ℹ️ Precio Especial por Ciento";
+        mensajeToast = `Contamos con una tarifa especial de <strong>S/ ${precioCientoUnitario.toFixed(2)}</strong> c/u a partir de 100 unidades.`;
+        tipoToast = 'blue';
+        dispararToast = true;
+
+    // RANGO 3: 50 a 99 Unidades (Sugerir activar la tarifa al ciento mostrando faltantes)
+    } else if (cantidad >= 50 && cantidad < 100) {
         const faltantes = 100 - cantidad;
         const nuevoPrecioUnitario = escalasPrecios.ciento + costoAdicionalesUnitario;
-        const ahorroPorUnidad = (precioUnitarioFinal - nuevoPrecioUnitario).toFixed(2);
         idEscalaActual = `ciento-${prodKey}-${cantidad}`;
 
         htmlBannerUpsell = `
             <div class="bg-amber-500/10 border border-amber-500/30 p-3.5 rounded-xl text-xs text-amber-300 space-y-1 my-3">
                 <div class="font-bold flex items-center gap-1.5 text-amber-400">
-                    🔥 ¡Descuento por Ciento Disponible!
+                    🔥 ¡Descuento por Ciento Cercano!
                 </div>
                 <p class="text-slate-300 leading-snug">
-                    Agrega <strong class="text-white font-bold">${faltantes} u.</strong> más para activar el precio al ciento: <strong class="text-amber-400 font-bold">S/ ${nuevoPrecioUnitario.toFixed(2)}</strong> c/u.
+                    Agrega <strong class="text-white font-bold">${faltantes} u.</strong> más para activar la tarifa al ciento: <strong class="text-amber-400 font-bold">S/ ${nuevoPrecioUnitario.toFixed(2)}</strong> c/u.
                 </p>
             </div>
         `;
 
-        tituloToast = "🔥 ¡Mayor Descuento!";
+        tituloToast = "🔥 ¡A un paso del Ciento!";
         mensajeToast = `Agrega <strong>${faltantes} unidades</strong> más para desbloquear la tarifa por ciento (<strong>S/ ${nuevoPrecioUnitario.toFixed(2)}</strong> c/u).`;
+        tipoToast = 'amber';
+        dispararToast = true;
 
+    // RANGO 4: 100+ Unidades (Máximo Descuento Alcanzado)
     } else {
         idEscalaActual = `maximo-${prodKey}`;
         htmlBannerUpsell = `
@@ -276,13 +309,14 @@ function calcularEnTiempoReal() {
                 🎉 ¡Felicidades! Tienes activada la tarifa de Máximo Descuento por Ciento.
             </div>
         `;
+        dispararToast = false;
     }
 
-    // Disparar la Notificación Toast (con Debounce para no molestar mientras escribe rápido)
-    if (idEscalaActual !== ultimaEscalaNotificada && (cantidad < 100)) {
+    // Disparar Notificación Flotante con Debounce
+    if (dispararToast && idEscalaActual !== ultimaEscalaNotificada) {
         clearTimeout(timerDebounceToast);
         timerDebounceToast = setTimeout(() => {
-            lanzarToastNotificacion(tituloToast, mensajeToast);
+            lanzarToastNotificacion(tituloToast, mensajeToast, tipoToast);
             ultimaEscalaNotificada = idEscalaActual;
         }, 600);
     }
@@ -290,7 +324,7 @@ function calcularEnTiempoReal() {
     /* ----------------------------------------------------------------------
        WHATSAPP Y RENDERIZADO FINAL EN PANTALLA
        ---------------------------------------------------------------------- */
-    const telefonoRCS = "51959562867"; // Reemplaza por tu número oficial
+    const telefonoRCS = "51959562867"; 
     const nombreCat = tarifasRCS[catKey].nombre;
     const nombreProd = datosProducto.nombre;
 
@@ -336,7 +370,7 @@ function calcularEnTiempoReal() {
                 </div>
             </div>
 
-            <!-- Banner Fijo de Upselling en la Tarjeta -->
+            <!-- Banner de Upselling o Informativo -->
             ${htmlBannerUpsell}
 
             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700/80 text-center my-3">
