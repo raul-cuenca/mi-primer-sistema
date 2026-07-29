@@ -1,31 +1,52 @@
 /* ==========================================================================
-   1. ESTRUCTURA DE DATOS (TARIFAS REALES DE RCS)
+   1. VARIABLES GLOBALES Y CAPTURA DEL DOM
    ========================================================================== */
-const tarifasRCS = {
-    blanca_11oz: { unidad: 7.00, docenas: 6.50, ciento: 5.90 },
-    conica_15oz: { unidad: 11.90, docenas: 10.50, ciento: 9.90 },
-    magica:      { unidad: 14.90, docenas: 13.90, ciento: 12.90 }
-};
+// Inicia nulo porque ahora los precios se cargarán desde el archivo JSON
+let tarifasRCS = null; 
 
-/* ==========================================================================
-   2. CAPTURA DE ELEMENTOS DE LA INTERFAZ (DOM)
-   ========================================================================== */
 const tipoTaza = document.getElementById('tipo-taza');
 const cantidadInput = document.getElementById('cantidad');
 const pantallaPrecio = document.getElementById('pantalla-precio');
 
 /* ==========================================================================
+   2. CARGA ASÍNCRONA DE DATOS (FETCH + JSON)
+   ========================================================================== */
+async function cargarTarifas() {
+    try {
+        // Pedimos el archivo JSON a la red
+        const respuesta = await fetch('precios.json');
+        
+        if (!respuesta.ok) throw new Error("No se pudo cargar el archivo JSON");
+
+        // Convertimos la respuesta en un objeto de JavaScript usable
+        tarifasRCS = await respuesta.json();
+
+        // Una vez que los precios están listos en memoria, restauramos lo guardado en localStorage
+        restaurarDatosGuardados();
+
+    } catch (error) {
+        console.error('Error al obtener los precios:', error);
+        pantallaPrecio.innerHTML = `
+            <p style="color: #d90429; font-weight: 600;">
+                ❌ No se pudieron cargar las tarifas de precios. Por favor recarga la página.
+            </p>
+        `;
+    }
+}
+
+/* ==========================================================================
    3. FUNCIÓN REUTILIZABLE DE CÁLCULO
    ========================================================================== */
 function calcularEnTiempoReal() {
+    // Control de seguridad: Si el JSON aún no ha terminado de cargar, no hace nada
+    if (!tarifasRCS) return;
+
     const modelo = tipoTaza.value;
     const cantidad = parseInt(cantidadInput.value);
 
-    // Guardar los valores ingresados en la memoria del navegador
     if (modelo) localStorage.setItem('rcs_modelo', modelo);
     if (!isNaN(cantidad)) localStorage.setItem('rcs_cantidad', cantidad);
 
-    // Control de seguridad si el campo está vacío
     if (!modelo || isNaN(cantidad) || cantidad < 1) {
         pantallaPrecio.innerHTML = `
             <p style="color: #2d6a4f; font-weight: 600; margin-bottom: 0;">
@@ -35,7 +56,6 @@ function calcularEnTiempoReal() {
         return;
     }
 
-    // Aplicación de reglas de negocio
     let precioUnitario = 0;
     if (cantidad >= 100) {
         precioUnitario = tarifasRCS[modelo].ciento;
@@ -47,7 +67,6 @@ function calcularEnTiempoReal() {
 
     const total = cantidad * precioUnitario;
 
-    // Mensaje para WhatsApp
     const telefonoRCS = "51959562867"; // Tu número real aquí
     const nombreModelo = tipoTaza.options[tipoTaza.selectedIndex].text;
 
@@ -65,7 +84,6 @@ function calcularEnTiempoReal() {
     const mensajeCodificado = encodeURIComponent(mensajeTexto);
     const urlWhatsApp = `https://wa.me/${telefonoRCS}?text=${mensajeCodificado}`;
 
-    // Inyección en el HTML
     pantallaPrecio.innerHTML = `
         <div style="animation: fadeIn 0.3s ease;">
             <h3 style="color: #2d6a4f; margin-bottom: 15px; font-size: 1.2rem;">¡Cotización al Instante!</h3>
@@ -91,28 +109,26 @@ function calcularEnTiempoReal() {
 }
 
 /* ==========================================================================
-   4. RESTAURAR DATOS AL CARGAR LA PÁGINA
+   4. RESTAURAR DATOS DESDE LOCALSTORAGE
    ========================================================================== */
-window.addEventListener('DOMContentLoaded', () => {
+function restaurarDatosGuardados() {
     const modeloGuardado = localStorage.getItem('rcs_modelo');
     const cantidadGuardada = localStorage.getItem('rcs_cantidad');
 
-    if (modeloGuardado) {
-        tipoTaza.value = modeloGuardado;
-    }
-    if (cantidadGuardada) {
-        cantidadInput.value = cantidadGuardada;
-    }
+    if (modeloGuardado) tipoTaza.value = modeloGuardado;
+    if (cantidadGuardada) cantidadInput.value = cantidadGuardada;
 
-    // Si ya teníamos datos guardados, calculamos la cotización de inmediato
     if (modeloGuardado && cantidadGuardada) {
         calcularEnTiempoReal();
     }
-});
+}
 
 /* ==========================================================================
-   5. ESCUCHADORES DE EVENTOS EN TIEMPO REAL
+   5. ESCUCHADORES DE EVENTOS
    ========================================================================== */
+// Iniciamos la descarga del JSON tan pronto se cargue el DOM
+window.addEventListener('DOMContentLoaded', cargarTarifas);
+
 tipoTaza.addEventListener('change', calcularEnTiempoReal);
 cantidadInput.addEventListener('input', calcularEnTiempoReal);
 cantidadInput.addEventListener('keyup', calcularEnTiempoReal);

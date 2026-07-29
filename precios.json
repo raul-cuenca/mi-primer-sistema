@@ -1,0 +1,17 @@
+{
+    "blanca_11oz": {
+        "unidad": 7.00,
+        "docenas": 6.50,
+        "ciento": 5.90
+    },
+    "conica_15oz": {
+        "unidad": 11.90,
+        "docenas": 10.50,
+        "ciento": 9.90
+    },
+    "magica": {
+        "unidad": 14.90,
+        "docenas": 13.90,
+        "ciento": 12.90
+    }
+}
