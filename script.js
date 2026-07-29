@@ -24,9 +24,9 @@ async function cargarTarifas() {
     } catch (error) {
         console.error('Error al obtener el catálogo:', error);
         pantallaPrecio.innerHTML = `
-            <p style="color: #d90429; font-weight: 600;">
+            <div class="p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm text-center">
                 ❌ No se pudieron cargar los productos. Por favor recarga la página.
-            </p>
+            </div>
         `;
     }
 }
@@ -68,7 +68,7 @@ function actualizarProductos() {
 }
 
 /* ==========================================================================
-   3. RENDERIZADO DINÁMICO DE OPCIONES ADICIONALES
+   3. RENDERIZADO DINÁMICO DE OPCIONES ADICIONALES (CON TAILWIND)
    ========================================================================== */
 function renderizarAdicionales() {
     contenedorAdicionales.innerHTML = '';
@@ -85,15 +85,15 @@ function renderizarAdicionales() {
             const adic = datosProducto.adicionales[keyAdicional];
 
             const divCampo = document.createElement('div');
-            divCampo.className = 'campo';
 
             const label = document.createElement('label');
             label.htmlFor = `adic-${keyAdicional}`;
+            label.className = 'block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2';
             label.textContent = adic.label;
 
             const select = document.createElement('select');
             select.id = `adic-${keyAdicional}`;
-            select.className = 'select-adicional';
+            select.className = 'w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl p-3 focus:ring-2 focus:ring-blue-800 focus:border-blue-800 transition font-medium select-adicional';
 
             for (const keyOp in adic.opciones) {
                 const op = adic.opciones[keyOp];
@@ -114,7 +114,7 @@ function renderizarAdicionales() {
 }
 
 /* ==========================================================================
-   4. CÁLCULO Y VISTA PREVIA COMPLETA + WHATSAPP
+   4. CÁLCULO Y VISTA PREVIA COMPLETA + ENLACE A WHATSAPP
    ========================================================================== */
 function calcularEnTiempoReal() {
     if (!tarifasRCS) return;
@@ -129,9 +129,11 @@ function calcularEnTiempoReal() {
 
     if (!catKey || !prodKey || isNaN(cantidad) || cantidad < 1) {
         pantallaPrecio.innerHTML = `
-            <p style="color: #2d6a4f; font-weight: 600; margin-bottom: 0;">
-                Selecciona la categoría, modelo y cantidad para ver el cálculo.
-            </p>
+            <div class="text-center py-8">
+                <p class="text-slate-400 text-sm">
+                    Selecciona los datos y escribe una cantidad válida para ver el cálculo.
+                </p>
+            </div>
         `;
         return;
     }
@@ -150,7 +152,7 @@ function calcularEnTiempoReal() {
 
     let costoAdicionalesUnitario = 0;
     let textoAdicionalesMensaje = '';
-    let htmlAdicionalesVista = ''; // 👈 Variable para renderizar en la pantalla web
+    let htmlAdicionalesVista = '';
 
     const selectoresAdicionales = document.querySelectorAll('.select-adicional');
     selectoresAdicionales.forEach(select => {
@@ -160,21 +162,22 @@ function calcularEnTiempoReal() {
 
         const labelTexto = select.previousElementSibling.textContent.replace(':', '');
         
-        // Formato para WhatsApp
+        // Texto para el mensaje de WhatsApp
         textoAdicionalesMensaje += `🔹 *${labelTexto}:* ${opcionSeleccionada.textContent}\n`;
 
-        // Formato para la Vista Web Previa
+        // Vista dinámica en la pantalla de la web
         htmlAdicionalesVista += `
-            <p style="color: #1e293b; margin-bottom: 8px;">
-                <strong>${labelTexto}:</strong> ${opcionSeleccionada.textContent}
-            </p>
+            <div class="flex justify-between items-center text-xs text-slate-300 bg-slate-800/60 p-2.5 rounded-lg border border-slate-700/50">
+                <span class="font-medium">${labelTexto}:</span>
+                <span class="font-semibold text-emerald-400">${opcionSeleccionada.textContent}</span>
+            </div>
         `;
     });
 
     const precioUnitarioFinal = precioBaseUnitario + costoAdicionalesUnitario;
     const total = cantidad * precioUnitarioFinal;
 
-    const telefonoRCS = "51959562867"; // Tu número de WhatsApp
+    const telefonoRCS = "51959562867"; // Reemplaza por tu número oficial de WhatsApp
     const nombreCat = tarifasRCS[catKey].nombre;
     const nombreProd = datosProducto.nombre;
 
@@ -194,37 +197,49 @@ function calcularEnTiempoReal() {
     const mensajeCodificado = encodeURIComponent(mensajeTexto);
     const urlWhatsApp = `https://wa.me/${telefonoRCS}?text=${mensajeCodificado}`;
 
-    // 🖥️ INYECCIÓN EN PANTALLA (INCLUYE ADICIONALES)
+    // Inyección de la tarjeta de resumen en el DOM
     pantallaPrecio.innerHTML = `
-        <div style="animation: fadeIn 0.3s ease;">
-            <h3 style="color: #2d6a4f; margin-bottom: 15px; font-size: 1.2rem;">¡Cotización al Instante!</h3>
-            <p style="color: #1e293b; margin-bottom: 8px;">
-                <strong>Categoría:</strong> ${nombreCat}
-            </p>
-            <p style="color: #1e293b; margin-bottom: 8px;">
-                <strong>Modelo:</strong> ${nombreProd}
-            </p>
-            ${htmlAdicionalesVista}
-            <p style="color: #1e293b; margin-bottom: 8px;">
-                <strong>Cantidad solicitada:</strong> ${cantidad} unidades
-            </p>
-            <p style="color: #1e293b; margin-bottom: 8px;">
-                <strong>Precio Unitario Final:</strong> S/ ${precioUnitarioFinal.toFixed(2)}
-            </p>
-            <hr style="border: 0; border-top: 1px solid #c8e6c9; margin: 12px 0;">
-            <p style="color: #2d6a4f; font-size: 1.4rem; font-weight: 700; margin-bottom: 10px;">
-                <strong>Total Estimado:</strong> S/ ${total.toFixed(2)}
-            </p>
+        <div class="space-y-4">
+            <div class="space-y-2">
+                <div class="flex justify-between items-center text-xs text-slate-400">
+                    <span>Categoría:</span>
+                    <span class="font-semibold text-white">${nombreCat}</span>
+                </div>
+                <div class="flex justify-between items-center text-xs text-slate-400">
+                    <span>Modelo:</span>
+                    <span class="font-semibold text-white">${nombreProd}</span>
+                </div>
+            </div>
 
-            <a href="${urlWhatsApp}" target="_blank" rel="noopener noreferrer" class="btn-whatsapp">
-                📲 Pedir esta cotización por WhatsApp
+            ${htmlAdicionalesVista ? `<div class="space-y-2 pt-1 border-t border-slate-800">${htmlAdicionalesVista}</div>` : ''}
+
+            <div class="pt-2 border-t border-slate-800 space-y-1">
+                <div class="flex justify-between items-center text-xs text-slate-400">
+                    <span>Cantidad:</span>
+                    <span class="font-bold text-white">${cantidad} unidades</span>
+                </div>
+                <div class="flex justify-between items-center text-xs text-slate-400">
+                    <span>Precio Unitario:</span>
+                    <span class="font-bold text-white">S/ ${precioUnitarioFinal.toFixed(2)}</span>
+                </div>
+            </div>
+
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700/80 text-center my-4">
+                <span class="block text-xs uppercase tracking-wider text-slate-400 mb-1">Monto Total Estimado</span>
+                <span class="text-3xl font-black text-emerald-400">S/ ${total.toFixed(2)}</span>
+            </div>
+
+            <a href="${urlWhatsApp}" target="_blank" rel="noopener noreferrer" 
+               class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-emerald-900/30 transition flex items-center justify-center gap-2 text-sm text-center">
+                <svg class="w-5 h-5 fill-current inline" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                Pedir esta cotización por WhatsApp
             </a>
         </div>
     `;
 }
 
 /* ==========================================================================
-   5. RESTAURAR LOCALSTORAGE
+   5. RESTAURAR DATOS DESDE LOCALSTORAGE
    ========================================================================== */
 function restaurarDatosGuardados() {
     const catGuardada = localStorage.getItem('rcs_categoria');
@@ -257,7 +272,6 @@ categoriaSelect.addEventListener('change', () => {
     cantidadInput.value = '';
     localStorage.removeItem('rcs_cantidad');
     localStorage.removeItem('rcs_producto');
-    
     actualizarProductos();
 });
 

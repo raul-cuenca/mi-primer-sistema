@@ -1,73 +1,125 @@
-<!doctype html>
-<html lang="en">
-
+<!DOCTYPE html>
+<html lang="es">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
-    <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cotizador Oficial | RCS Merchandising</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fuente Montserrat -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Configuración personalizada de Tailwind CSS -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Montserrat', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
 </head>
+<body class="bg-slate-100 font-sans text-slate-800 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
 
-<body>
-
-    <!-- Cabecera del sistema -->
-    <header>
-        <h1>RCS - Sistema de Cotización</h1>
-    </header>
-
-    <!-- Núcleo de la aplicación -->
-    <main>
-        <!-- Sección 1: El Formulario del cliente -->
-        <section id="seccion-cotizador">
-            <h2>Configura tu pedido</h2>
-            <p>Selecciona las características de tus tazas sublimables.</p>
-
-            <form id="form-cotizador">
-                <!-- Selector de Categoría (Cargado dinámicamente) -->
-                <div class="campo">
-                    <label for="categoria">Categoría del Producto:</label>
-                    <select id="categoria" required>
-                        <option value="">Cargando categorías...</option>
-                    </select>
-                </div>
-
-                <!-- Selector de Producto -->
-                <div class="campo">
-                    <label for="tipo-producto">Modelo de Producto:</label>
-                    <select id="tipo-producto" required disabled>
-                        <option value="">Selecciona primero una categoría</option>
-                    </select>
-                </div>
-
-                <!-- Contenedor dinámico de adicionales -->
-                <div id="contenedor-adicionales"></div>
-
-                <!-- Campo de Cantidad -->
-                <div class="campo">
-                    <label for="cantidad">Cantidad deseada:</label>
-                    <input type="number" id="cantidad" min="1" placeholder="Ej: 24" required>
-                </div>
-            </form>
-        </section>
-
-        <!-- Sección 2: El Panel donde se mostrará el precio final -->
-        <section id="seccion-resultado">
-            <h2>Resumen de Cotización</h2>
-            <div id="pantalla-precio">
-                <!-- Aquí JavaScript inyectará el precio mañana -->
-                <p>Selecciona tus opciones para calcular el total.</p>
+    <div class="max-w-4xl mx-auto">
+        
+        <!-- Encabezado Corporativo -->
+        <header class="text-center mb-8">
+            <div class="inline-block bg-blue-900 text-white px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase mb-3 shadow-sm">
+                RCS Merchandising
             </div>
-        </section>
-    </main>
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                Calculadora de Cotizaciones
+            </h1>
+            <p class="mt-2 text-slate-600 text-sm sm:text-base max-w-lg mx-auto">
+                Selecciona tus productos, opciones y empaques para obtener tu cotización al instante.
+            </p>
+        </header>
 
-    <!-- Pie de página profesional -->
-    <footer>
-        <p>&copy; 2026 RCS Merchandising. Todos los derechos reservados.</p>
-    </footer>
+        <!-- Cuadrícula Principal (Formulario a la Izquierda / Resumen a la Derecha) -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+            
+            <!-- Columna Izquierda: Formulario de Selección -->
+            <div class="md:col-span-7 bg-white p-6 sm:p-8 rounded-2xl shadow-xl border border-slate-200/80">
+                <h2 class="text-lg font-bold text-slate-900 mb-5 pb-3 border-b border-slate-100 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                    Configura tu Pedido
+                </h2>
 
-    <!-- Conexión con el cerebro de la aplicación -->
+                <form id="cotizador-form" onsubmit="event.preventDefault();" class="space-y-5">
+                    
+                    <!-- 1. Categoría -->
+                    <div>
+                        <label for="categoria" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                            1. Categoría de Producto
+                        </label>
+                        <select id="categoria" required class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl p-3 focus:ring-2 focus:ring-blue-800 focus:border-blue-800 transition font-medium">
+                            <option value="">Cargando catálogo...</option>
+                        </select>
+                    </div>
+
+                    <!-- 2. Modelo -->
+                    <div>
+                        <label for="tipo-producto" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                            2. Modelo o Variante
+                        </label>
+                        <select id="tipo-producto" required disabled class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl p-3 focus:ring-2 focus:ring-blue-800 focus:border-blue-800 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+                            <option value="">Selecciona primero una categoría</option>
+                        </select>
+                    </div>
+
+                    <!-- Contenedor Dinámico para Adicionales (Color, Empaque, etc.) -->
+                    <div id="contenedor-adicionales" class="space-y-4 pt-1"></div>
+
+                    <!-- 3. Cantidad -->
+                    <div>
+                        <label for="cantidad" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                            3. Cantidad Deseada
+                        </label>
+                        <input type="number" id="cantidad" min="1" placeholder="Ejemplo: 24" required class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl p-3 focus:ring-2 focus:ring-blue-800 focus:border-blue-800 transition font-semibold">
+                    </div>
+
+                </form>
+            </div>
+
+            <!-- Columna Derecha: Tarjeta de Resumen en Tiempo Real -->
+            <div class="md:col-span-5 bg-slate-900 text-white p-6 sm:p-8 rounded-2xl shadow-xl border border-slate-800 md:sticky md:top-6">
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
+                    <h3 class="text-base font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                        </svg>
+                        Resumen del Pedido
+                    </h3>
+                    <span class="bg-emerald-500/20 text-emerald-400 text-xs px-2.5 py-1 rounded-full font-semibold border border-emerald-500/30">
+                        En vivo
+                    </span>
+                </div>
+
+                <!-- Zona donde JavaScript inyectará el resumen en vivo -->
+                <div id="pantalla-precio">
+                    <p class="text-slate-400 text-sm text-center py-8">
+                        Selecciona los detalles de tu producto para visualizar la cotización.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Pie de página -->
+        <footer class="mt-12 text-center text-xs text-slate-500">
+            © 2026 RCS Merchandising. Todos los derechos reservados.
+        </footer>
+    </div>
+
+    <!-- Archivo de Lógica JavaScript -->
     <script src="script.js"></script>
 </body>
-</body>
-
 </html>
