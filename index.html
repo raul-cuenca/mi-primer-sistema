@@ -72,10 +72,10 @@
                             class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
                             1. Categoría de Producto
                         </label>
-                        <select id="categoria" required
-                            class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl p-3 focus:ring-2 focus:ring-blue-800 focus:border-blue-800 transition font-medium">
-                            <option value="">Cargando catálogo...</option>
-                        </select>
+                        <select id="categoria" onchange="actualizarProductos()" required
+                            class="... w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl p-3 focus:ring-2 focus:ring-blue-800 focus:border-blue-800 transition font-medium">
+                            <option value="" disabled selected>-- Selecciona Categoría --</option>
+                        </select>                      
                     </div>
 
                     <!-- 2. Modelo -->
@@ -85,8 +85,8 @@
                             2. Modelo o Variante
                         </label>
                         <select id="tipo-producto" required disabled
-                            class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl p-3 focus:ring-2 focus:ring-blue-800 focus:border-blue-800 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed">
-                            <option value="">Selecciona primero una categoría</option>
+                            class="... w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl p-3 focus:ring-2 focus:ring-blue-800 focus:border-blue-800 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+                            <option value="" disabled selected>-- Selecciona Modelo --</option>
                         </select>
                     </div>
 
@@ -109,8 +109,9 @@
                             class="block text-xs font-bold uppercase tracking-wider text-slate-600">
                             🎨 Estado del Diseño / Logo
                         </label>
-                        <select id="estado-diseno"
-                            class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl p-3 focus:ring-2 focus:ring-blue-800 focus:border-blue-800 transition font-medium">
+                        <select id="estado-diseno" required
+                            class="... w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl p-3 focus:ring-2 focus:ring-blue-800 focus:border-blue-800 transition font-medium">
+                            <option value="" disabled selected>-- Selecciona Estado del Diseño --</option>
                             <option value="listo">✅ Tengo el diseño listo para sublimar (Sin costo extra)</option>
                             <option value="retoque">✏️ Tengo una idea/imagen para retocar (+1 día hábil)</option>
                             <option value="creacion">🆕 No tengo diseño, crear desde cero (+2 días hábiles | +S/ 15.00)
@@ -156,33 +157,39 @@
     </div>
 
     <!-- Modal de Captura de Datos del Cliente -->
-    <div id="modal-cliente" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 border border-slate-800 text-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative animate-in fade-in zoom-in duration-200">
-            
+    <div id="modal-cliente"
+        class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div
+            class="bg-slate-900 border border-slate-800 text-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative animate-in fade-in zoom-in duration-200">
+
             <div class="flex justify-between items-center pb-3 border-b border-slate-800 mb-4">
                 <h3 class="text-base font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-2">
                     📋 Datos para tu Cotización
                 </h3>
-                <button onclick="cerrarModalWhatsApp()" class="text-slate-400 hover:text-white font-bold text-sm p-1 transition">✕</button>
+                <button onclick="cerrarModalWhatsApp()"
+                    class="text-slate-400 hover:text-white font-bold text-sm p-1 transition">✕</button>
             </div>
 
             <p class="text-slate-400 text-xs mb-4">
                 Ingresa tus datos para adjuntarlos a la orden y redirigirte directamente a WhatsApp.
             </p>
 
-            <form id="form-datos-cliente" onsubmit="event.preventDefault(); validarYEnviarWhatsApp();" class="space-y-4">
-                
+            <form id="form-datos-cliente" onsubmit="event.preventDefault(); validarYEnviarWhatsApp();"
+                class="space-y-4">
+
                 <!-- 1. Nombre / Razón Social -->
                 <div>
-                    <label for="cliente-nombre" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">
+                    <label for="cliente-nombre"
+                        class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">
                         Nombre / Razón Social <span class="text-emerald-400">*</span>
                     </label>
                     <input type="text" id="cliente-nombre" placeholder="Ej: Juan Pérez o RCS Empresa SAC"
                         class="w-full bg-slate-800/80 border border-slate-700 text-white text-sm rounded-xl p-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
-                    <p id="error-nombre" class="text-[11px] text-red-400 mt-1 hidden">⚠️ Ingrese un nombre o razón social válido (mín. 3 caracteres).</p>
+                    <p id="error-nombre" class="text-[11px] text-red-400 mt-1 hidden">⚠️ Ingrese un nombre o razón
+                        social válido (mín. 3 caracteres).</p>
                 </div>
 
-<!-- 2. Tipo y Número de Documento -->
+                <!-- 2. Tipo y Número de Documento -->
                 <div>
                     <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">
                         Documento de Identidad / RUC <span class="text-emerald-400">*</span>
@@ -202,22 +209,26 @@
 
                 <!-- 3. Teléfono de contacto -->
                 <div>
-                    <label for="cliente-telefono" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">
+                    <label for="cliente-telefono"
+                        class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">
                         Teléfono de Contacto <span class="text-emerald-400">*</span>
                     </label>
                     <input type="tel" id="cliente-telefono" placeholder="Ej: 987654321"
                         class="w-full bg-slate-800/80 border border-slate-700 text-white text-sm rounded-xl p-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
-                    <p id="error-telefono" class="text-[11px] text-red-400 mt-1 hidden">⚠️ Ingrese un número celular o de contacto válido.</p>
+                    <p id="error-telefono" class="text-[11px] text-red-400 mt-1 hidden">⚠️ Ingrese un número celular o
+                        de contacto válido.</p>
                 </div>
 
                 <!-- 4. Correo electrónico (Opcional) -->
                 <div>
-                    <label for="cliente-correo" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">
+                    <label for="cliente-correo"
+                        class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">
                         Correo Electrónico <span class="text-slate-500 font-normal lowercase">(opcional)</span>
                     </label>
                     <input type="email" id="cliente-correo" placeholder="ejemplo@correo.com"
                         class="w-full bg-slate-800/80 border border-slate-700 text-white text-sm rounded-xl p-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
-                    <p id="error-correo" class="text-[11px] text-red-400 mt-1 hidden">⚠️ Ingrese un formato de correo electrónico válido.</p>
+                    <p id="error-correo" class="text-[11px] text-red-400 mt-1 hidden">⚠️ Ingrese un formato de correo
+                        electrónico válido.</p>
                 </div>
 
                 <!-- Botones del Formulario -->

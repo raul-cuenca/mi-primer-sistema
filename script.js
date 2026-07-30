@@ -1,10 +1,10 @@
 /* ==========================================================================
    1. VARIABLES GLOBALES Y CAPTURA DEL DOM
    ========================================================================== */
-let tarifasRCS = null; 
+let tarifasRCS = null;
 let timerToast = null;
 let timerDebounceToast = null;
-let ultimaEscalaNotificada = ''; 
+let ultimaEscalaNotificada = '';
 
 const categoriaSelect = document.getElementById('categoria');
 const productoSelect = document.getElementById('tipo-producto');
@@ -24,7 +24,7 @@ async function cargarTarifas() {
 
         tarifasRCS = await respuesta.json();
         poblarCategorias();
-        restaurarDatosGuardados();
+        //restaurarDatosGuardados();
 
     } catch (error) {
         console.error('Error al obtener el catálogo:', error);
@@ -37,7 +37,7 @@ async function cargarTarifas() {
 }
 
 function poblarCategorias() {
-    categoriaSelect.innerHTML = '<option value="">-- Selecciona Categoría --</option>';
+    categoriaSelect.innerHTML = '<option value="" disabled selected>-- Selecciona Categoría --</option>';
 
     for (const keyCat in tarifasRCS) {
         const option = document.createElement('option');
@@ -49,8 +49,10 @@ function poblarCategorias() {
 
 function actualizarProductos() {
     const catSeleccionada = categoriaSelect.value;
-    productoSelect.innerHTML = '<option value="">-- Selecciona Modelo --</option>';
-    contenedorAdicionales.innerHTML = ''; 
+
+    // Placeholder neutro
+    productoSelect.innerHTML = '<option value="" disabled selected>-- Selecciona Modelo --</option>';
+    contenedorAdicionales.innerHTML = '';
 
     if (!catSeleccionada || !tarifasRCS[catSeleccionada]) {
         productoSelect.disabled = true;
@@ -96,9 +98,18 @@ function renderizarAdicionales() {
             label.className = 'block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2';
             label.textContent = adic.label;
 
+            // Dentro de renderizarAdicionales(), cuando creas el select:
             const select = document.createElement('select');
             select.id = `adic-${keyAdicional}`;
             select.className = 'w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl p-3 focus:ring-2 focus:ring-blue-800 focus:border-blue-800 transition font-medium select-adicional';
+
+            // 🔹 Agregar opción neutra obligatoria al inicio:
+            const opcionInicial = document.createElement('option');
+            opcionInicial.value = '';
+            opcionInicial.disabled = true;
+            opcionInicial.selected = true;
+            opcionInicial.textContent = `-- Selecciona ${adic.label.replace(':', '')} --`;
+            select.appendChild(opcionInicial);
 
             for (const keyOp in adic.opciones) {
                 const op = adic.opciones[keyOp];
@@ -107,7 +118,7 @@ function renderizarAdicionales() {
                 option.dataset.extra = op.extra;
                 option.textContent = op.nombre;
                 select.appendChild(option);
-            }
+            }        
 
             select.addEventListener('change', calcularEnTiempoReal);
 
@@ -132,7 +143,7 @@ function lanzarToastNotificacion(titulo, mensaje, tipo = 'amber') {
 
     const toast = document.createElement('div');
     toast.className = `pointer-events-auto bg-slate-900/95 text-white p-4 rounded-2xl shadow-2xl border ${colorBorde} flex items-start gap-3 transform transition-all duration-500 translate-y-8 opacity-0 backdrop-blur-md`;
-    
+
     toast.innerHTML = `
         <div class="${colorIconoBg} p-2 rounded-xl border flex-shrink-0">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -167,7 +178,7 @@ function lanzarToastNotificacion(titulo, mensaje, tipo = 'amber') {
 function sumarDiasHabiles(fechaInicial, diasAñadir) {
     let fecha = new Date(fechaInicial);
     let diasSumados = 0;
-    
+
     while (diasSumados < diasAñadir) {
         fecha.setDate(fecha.getDate() + 1);
         const diaSemana = fecha.getDay(); // 0 = Domingo, 6 = Sábado
@@ -208,8 +219,8 @@ function calcularTiempoEntrega(cantidad, estadoDiseno) {
     const totalMin = diasBaseMin + diasAdicionales;
     const totalMax = diasBaseMax + diasAdicionales;
 
-    const textoDias = (totalMin === totalMax) 
-        ? `${totalMin} días hábiles` 
+    const textoDias = (totalMin === totalMax)
+        ? `${totalMin} días hábiles`
         : `${totalMin} a ${totalMax} días hábiles`;
 
     const horaActual = new Date();
@@ -296,7 +307,7 @@ function calcularEnTiempoReal() {
     });
 
     const precioUnitarioFinal = precioBaseUnitario + costoAdicionalesUnitario;
-    
+
     let costoDisenoExtra = 0;
     if (estadoDiseno === 'creacion') {
         costoDisenoExtra = 15.00;
@@ -474,7 +485,7 @@ function cerrarModalWhatsApp() {
 function actualizarPlaceholderDoc() {
     const tipo = document.getElementById('cliente-tipo-doc').value;
     const inputDoc = document.getElementById('cliente-documento');
-    
+
     if (tipo === 'dni') {
         inputDoc.placeholder = "Ej: 71234567 (8 dígitos)";
     } else if (tipo === 'ce') {
@@ -601,7 +612,7 @@ function ejecutarEnvioWhatsApp(nombre, documento, telefono, correo) {
     });
 
     const precioUnitarioFinal = precioBaseUnitario + costoAdicionalesUnitario;
-    
+
     let costoDisenoExtra = 0;
     let textoEstadoDiseno = "Diseño listo para sublimar";
     if (estadoDiseno === 'retoque') {
@@ -614,12 +625,12 @@ function ejecutarEnvioWhatsApp(nombre, documento, telefono, correo) {
     const totalFinal = (cantidad * precioUnitarioFinal) + costoDisenoExtra;
     const infoEntrega = calcularTiempoEntrega(cantidad, estadoDiseno);
 
-    const telefonoRCS = "51959562867"; 
+    const telefonoRCS = "51959562867";
     const nombreCat = tarifasRCS[catKey].nombre;
     const nombreProd = datosProducto.nombre;
 
     // Mensaje de WhatsApp estructurado
-    const mensajeTexto = 
+    const mensajeTexto =
         `✨ *¡NUEVA COTIZACIÓN DESDE LA WEB!* ✨\n\n` +
         `👤 *DATOS DEL CLIENTE*\n` +
         `📛 *Cliente:* ${nombre}\n` +
@@ -649,7 +660,7 @@ function ejecutarEnvioWhatsApp(nombre, documento, telefono, correo) {
     // Resetear todos los campos del cotizador y modal
     limpiarFormulario();
 }
-}
+
 
 /* ==========================================================================
    8. RESTAURAR DATOS DESDE LOCALSTORAGE
@@ -728,7 +739,7 @@ function limpiarFormulario() {
 
     // 2. Limpiar campos del Cotizador Principal
     if (categoriaSelect) categoriaSelect.selectedIndex = 0;
-    
+
     // Disparar el evento change si existe lógica dependiente para limpiar select de productos
     if (categoriaSelect) {
         categoriaSelect.dispatchEvent(new Event('change'));
