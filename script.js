@@ -158,10 +158,18 @@ function renderizarAdicionales() {
 /**
  * Dibuja las muestras circulares leyendo 'opciones' del JSON
  */
+/**
+ * Dibuja las muestras circulares leyendo 'opciones' del JSON
+ */
+/**
+ * Dibuja las muestras circulares leyendo 'opciones' del JSON
+ */
 function renderizarMuestrasColor(adicionalColor) {
     const contenedor = document.getElementById('contenedor-colores');
     const grid = document.getElementById('grid-muestras-color');
     const inputOculto = document.getElementById('color-seleccionado');
+    const labelColores = document.getElementById('label-colores');
+    const notaCosto = document.getElementById('nota-costo-color');
 
     if (!contenedor || !grid || !inputOculto) return;
 
@@ -170,13 +178,24 @@ function renderizarMuestrasColor(adicionalColor) {
         inputOculto.value = '';
         inputOculto.dataset.extra = '0';
         inputOculto.dataset.nombre = '';
+        if (notaCosto) notaCosto.classList.add('hidden');
         return;
+    }
+
+    // Actualizar título dinámico según el JSON (ej. "Color Interno de la Taza:")
+    if (labelColores && adicionalColor.label) {
+        const textoLimpio = adicionalColor.label.replace(':', '').trim();
+        labelColores.innerHTML = `🎨 ${textoLimpio} <span class="text-blue-900">*</span>`;
     }
 
     grid.innerHTML = '';
     inputOculto.value = '';
     inputOculto.dataset.extra = '0';
     inputOculto.dataset.nombre = '';
+    
+    // Iniciar con la etiqueta de costo oculta
+    if (notaCosto) notaCosto.classList.add('hidden');
+    
     contenedor.classList.remove('hidden');
 
     const opciones = adicionalColor.opciones;
@@ -187,14 +206,14 @@ function renderizarMuestrasColor(adicionalColor) {
 
         const btnSwatch = document.createElement('button');
         btnSwatch.type = 'button';
-        btnSwatch.className = `muestra-color w-9 h-9 rounded-full transition-all duration-200 transform hover:scale-110 focus:outline-none flex items-center justify-center relative shadow-sm ${
+        btnSwatch.className = `muestra-color w-7 h-7 rounded-full transition-all duration-200 transform hover:scale-110 focus:outline-none flex items-center justify-center relative shadow-sm ${
             infoColor.borde ? 'border border-slate-400' : 'border border-transparent'
         }`;
         btnSwatch.style.backgroundColor = infoColor.hex;
         btnSwatch.title = op.nombre;
 
         const checkIcon = document.createElement('span');
-        checkIcon.className = 'check-indicador text-xs font-bold hidden ' + (infoColor.hex === '#FFFFFF' ? 'text-slate-900' : 'text-white');
+        checkIcon.className = 'check-indicador text-[10px] font-bold hidden ' + (infoColor.hex === '#FFFFFF' ? 'text-slate-900' : 'text-white');
         checkIcon.innerHTML = '✓';
         btnSwatch.appendChild(checkIcon);
 
@@ -209,16 +228,22 @@ function renderizarMuestrasColor(adicionalColor) {
 /**
  * Selecciona un color, guarda su precio extra y recalcula
  */
+/**
+ * Selecciona un color, evalúa si tiene costo extra y actualiza la UI
+ */
 function seleccionarColor(elementoSeleccionado, keyColor, extraCosto, nombreCompleto) {
     const inputOculto = document.getElementById('color-seleccionado');
     const errorMsg = document.getElementById('error-color');
+    const notaCosto = document.getElementById('nota-costo-color');
 
+    // Quitar selección previa de todos los botones
     document.querySelectorAll('.muestra-color').forEach(btn => {
         btn.classList.remove('ring-4', 'ring-blue-800', 'scale-110');
         const check = btn.querySelector('.check-indicador');
         if (check) check.classList.add('hidden');
     });
 
+    // Activar el botón seleccionado
     elementoSeleccionado.classList.add('ring-4', 'ring-blue-800', 'scale-110');
     const checkActivo = elementoSeleccionado.querySelector('.check-indicador');
     if (checkActivo) checkActivo.classList.remove('hidden');
@@ -226,6 +251,17 @@ function seleccionarColor(elementoSeleccionado, keyColor, extraCosto, nombreComp
     inputOculto.value = keyColor;
     inputOculto.dataset.extra = extraCosto || 0;
     inputOculto.dataset.nombre = nombreCompleto || keyColor;
+
+    // 💡 MOSTRAR U OCULTAR BADGE SEGÚN EL COSTO DEL COLOR SELECCIONADO
+    if (notaCosto) {
+        const extra = parseFloat(extraCosto) || 0;
+        if (extra > 0) {
+            notaCosto.textContent = `+S/ ${extra.toFixed(2)} por unidad`;
+            notaCosto.classList.remove('hidden');
+        } else {
+            notaCosto.classList.add('hidden'); // Se oculta en Blanco o costo 0
+        }
+    }
 
     if (errorMsg) errorMsg.classList.add('hidden');
 
@@ -905,4 +941,7 @@ function limpiarFormulario() {
 
     const contenedorColores = document.getElementById('contenedor-colores');
     if (contenedorColores) contenedorColores.classList.add('hidden');
+
+    const notaCosto = document.getElementById('nota-costo-color');
+    if (notaCosto) notaCosto.classList.add('hidden');
 }
