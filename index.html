@@ -93,6 +93,18 @@
                     <!-- Contenedor Dinámico para Adicionales (Color, Empaque, etc.) -->
                     <div id="contenedor-adicionales" class="space-y-4 pt-1"></div>
 
+                    <!-- 🎨 Módulo de Selección Visual de Color (Swatches) -->
+                    <div id="contenedor-colores" class="hidden space-y-2 pt-1">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600">
+                            🎨 Color del Producto <span class="text-blue-900">*</span>
+                        </label>
+                        <div id="grid-muestras-color" class="flex flex-wrap gap-2.5 items-center p-3 bg-slate-50 rounded-xl border border-slate-300">
+                            <!-- Los botones circulares se inyectarán dinámicamente con JS -->
+                        </div>
+                        <input type="hidden" id="color-seleccionado" value="">
+                        <p id="error-color" class="text-[11px] text-red-500 hidden">⚠️ Por favor, elige un color para continuar.</p>
+                    </div>
+
                     <!-- 3. Cantidad -->
                     <div>
                         <label for="cantidad"

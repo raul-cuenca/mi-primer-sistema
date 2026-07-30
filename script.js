@@ -1,4 +1,18 @@
 /* ==========================================================================
+   MAPEO HEX PARA MUESTRAS VISUALES DE COLOR
+   ========================================================================== */
+const MAPA_COLORES = {
+    'blanco': { hex: '#FFFFFF', borde: true },
+    'rojo': { hex: '#DC2626' },
+    'verde': { hex: '#16A34A' },
+    'amarillo': { hex: '#FACC15' },
+    'celeste': { hex: '#38BDF8' },
+    'negro': { hex: '#18181B' },
+    'azul marino': { hex: '#1E3A8A' }
+};
+
+
+/* ==========================================================================
    1. VARIABLES GLOBALES Y CAPTURA DEL DOM
    ========================================================================== */
 let tarifasRCS = null;
@@ -75,7 +89,7 @@ function actualizarProductos() {
 }
 
 /* ==========================================================================
-   3. RENDERIZADO DINÁMICO DE OPCIONES ADICIONALES
+   3. RENDERIZADO DINÁMICO DE ADICIONALES Y MUESTROS VISUALES
    ========================================================================== */
 function renderizarAdicionales() {
     contenedorAdicionales.innerHTML = '';
@@ -83,14 +97,25 @@ function renderizarAdicionales() {
     const catKey = categoriaSelect.value;
     const prodKey = productoSelect.value;
 
-    if (!catKey || !prodKey || !tarifasRCS[catKey] || !tarifasRCS[catKey].productos[prodKey]) return;
+    if (!catKey || !prodKey || !tarifasRCS[catKey] || !tarifasRCS[catKey].productos[prodKey]) {
+        renderizarMuestrasColor(null);
+        return;
+    }
 
     const datosProducto = tarifasRCS[catKey].productos[prodKey];
+    let objetoColorAdicional = null;
 
     if (datosProducto.adicionales) {
         for (const keyAdicional in datosProducto.adicionales) {
             const adic = datosProducto.adicionales[keyAdicional];
 
+            // SI EL ADICIONAL ES 'color', LO CAPTURAMOS PARA RECTÁNGULOS/CÍRCULOS VISUALES
+            if (keyAdicional === 'color') {
+                objetoColorAdicional = adic;
+                continue; // No lo creamos como <select> desplegable
+            }
+
+            // Para otros adicionales (ej. empaque), se crea el <select> normal
             const divCampo = document.createElement('div');
 
             const label = document.createElement('label');
@@ -98,12 +123,10 @@ function renderizarAdicionales() {
             label.className = 'block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2';
             label.textContent = adic.label;
 
-            // Dentro de renderizarAdicionales(), cuando creas el select:
             const select = document.createElement('select');
             select.id = `adic-${keyAdicional}`;
             select.className = 'w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl p-3 focus:ring-2 focus:ring-blue-800 focus:border-blue-800 transition font-medium select-adicional';
 
-            // 🔹 Agregar opción neutra obligatoria al inicio:
             const opcionInicial = document.createElement('option');
             opcionInicial.value = '';
             opcionInicial.disabled = true;
@@ -127,7 +150,90 @@ function renderizarAdicionales() {
             contenedorAdicionales.appendChild(divCampo);
         }
     }
+
+    // Renderizar muestras visuales con el objeto de opciones extra
+    renderizarMuestrasColor(objetoColorAdicional);
 }
+
+/**
+ * Dibuja las muestras circulares leyendo 'opciones' del JSON
+ */
+function renderizarMuestrasColor(adicionalColor) {
+    const contenedor = document.getElementById('contenedor-colores');
+    const grid = document.getElementById('grid-muestras-color');
+    const inputOculto = document.getElementById('color-seleccionado');
+
+    if (!contenedor || !grid || !inputOculto) return;
+
+    if (!adicionalColor || !adicionalColor.opciones) {
+        contenedor.classList.add('hidden');
+        inputOculto.value = '';
+        inputOculto.dataset.extra = '0';
+        inputOculto.dataset.nombre = '';
+        return;
+    }
+
+    grid.innerHTML = '';
+    inputOculto.value = '';
+    inputOculto.dataset.extra = '0';
+    inputOculto.dataset.nombre = '';
+    contenedor.classList.remove('hidden');
+
+    const opciones = adicionalColor.opciones;
+
+    for (const keyColor in opciones) {
+        const op = opciones[keyColor]; // { nombre: "Rojo (+S/ 0.50)", extra: 0.50 }
+        const infoColor = MAPA_COLORES[keyColor.toLowerCase().trim()] || { hex: '#CBD5E1' };
+
+        const btnSwatch = document.createElement('button');
+        btnSwatch.type = 'button';
+        btnSwatch.className = `muestra-color w-9 h-9 rounded-full transition-all duration-200 transform hover:scale-110 focus:outline-none flex items-center justify-center relative shadow-sm ${
+            infoColor.borde ? 'border border-slate-400' : 'border border-transparent'
+        }`;
+        btnSwatch.style.backgroundColor = infoColor.hex;
+        btnSwatch.title = op.nombre;
+
+        const checkIcon = document.createElement('span');
+        checkIcon.className = 'check-indicador text-xs font-bold hidden ' + (infoColor.hex === '#FFFFFF' ? 'text-slate-900' : 'text-white');
+        checkIcon.innerHTML = '✓';
+        btnSwatch.appendChild(checkIcon);
+
+        btnSwatch.addEventListener('click', function() {
+            seleccionarColor(this, keyColor, op.extra, op.nombre);
+        });
+
+        grid.appendChild(btnSwatch);
+    }
+}
+
+/**
+ * Selecciona un color, guarda su precio extra y recalcula
+ */
+function seleccionarColor(elementoSeleccionado, keyColor, extraCosto, nombreCompleto) {
+    const inputOculto = document.getElementById('color-seleccionado');
+    const errorMsg = document.getElementById('error-color');
+
+    document.querySelectorAll('.muestra-color').forEach(btn => {
+        btn.classList.remove('ring-4', 'ring-blue-800', 'scale-110');
+        const check = btn.querySelector('.check-indicador');
+        if (check) check.classList.add('hidden');
+    });
+
+    elementoSeleccionado.classList.add('ring-4', 'ring-blue-800', 'scale-110');
+    const checkActivo = elementoSeleccionado.querySelector('.check-indicador');
+    if (checkActivo) checkActivo.classList.remove('hidden');
+
+    inputOculto.value = keyColor;
+    inputOculto.dataset.extra = extraCosto || 0;
+    inputOculto.dataset.nombre = nombreCompleto || keyColor;
+
+    if (errorMsg) errorMsg.classList.add('hidden');
+
+    if (typeof calcularEnTiempoReal === 'function') {
+        calcularEnTiempoReal();
+    }
+}
+
 
 /* ==========================================================================
    4. SISTEMA DE NOTIFICACIONES TOAST
@@ -305,6 +411,21 @@ function calcularEnTiempoReal() {
             </div>
         `;
     });
+
+    // 🎨 Capturar costo y vista del Color Seleccionado (Swatches)
+    const inputColor = document.getElementById('color-seleccionado');
+    if (inputColor && inputColor.value) {
+        const extraColor = parseFloat(inputColor.dataset.extra) || 0;
+        costoAdicionalesUnitario += extraColor;
+        const nombreColorVisual = inputColor.dataset.nombre || inputColor.value;
+
+        htmlAdicionalesVista += `
+            <div class="flex justify-between items-center text-xs text-slate-300 bg-slate-800/60 p-2.5 rounded-lg border border-slate-700/50">
+                <span class="font-medium">Color:</span>
+                <span class="font-semibold text-amber-400">${nombreColorVisual}</span>
+            </div>
+        `;
+    }
 
     const precioUnitarioFinal = precioBaseUnitario + costoAdicionalesUnitario;
 
@@ -611,6 +732,15 @@ function ejecutarEnvioWhatsApp(nombre, documento, telefono, correo) {
         textoAdicionalesMensaje += `🔹 *${labelTexto}:* ${opcionSeleccionada.textContent}\n`;
     });
 
+    // 🎨 Incluir el Color en el mensaje enviado a WhatsApp
+    const inputColor = document.getElementById('color-seleccionado');
+    if (inputColor && inputColor.value) {
+        const extraColor = parseFloat(inputColor.dataset.extra) || 0;
+        costoAdicionalesUnitario += extraColor;
+        const nombreColorVisual = inputColor.dataset.nombre || inputColor.value;
+        textoAdicionalesMensaje += `🎨 *Color:* ${nombreColorVisual}\n`;
+    }
+
     const precioUnitarioFinal = precioBaseUnitario + costoAdicionalesUnitario;
 
     let costoDisenoExtra = 0;
@@ -758,4 +888,21 @@ function limpiarFormulario() {
     if (contenedorResumen) {
         contenedorResumen.innerHTML = '<p class="text-slate-400 text-sm">Selecciona un producto y cantidad para ver el cálculo.</p>';
     }
+
+    // 4. Resetear la selección visual de colores
+    const inputColor = document.getElementById('color-seleccionado');
+    if (inputColor) {
+        inputColor.value = '';
+        inputColor.dataset.extra = '0';
+        inputColor.dataset.nombre = '';
+    }
+
+    document.querySelectorAll('.muestra-color').forEach(btn => {
+        btn.classList.remove('ring-4', 'ring-blue-800', 'scale-110');
+        const check = btn.querySelector('.check-indicador');
+        if (check) check.classList.add('hidden');
+    });
+
+    const contenedorColores = document.getElementById('contenedor-colores');
+    if (contenedorColores) contenedorColores.classList.add('hidden');
 }
