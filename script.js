@@ -1,11 +1,10 @@
 /* ==========================================================================
-   RCS MERCHANDISING - LÓGICA CON CONEXIÓN A SUPABASE (v1.2.1-db)
+   RCS MERCHANDISING - LÓGICA CON CONEXIÓN A SUPABASE (v1.2.2-db)
    ========================================================================== */
 
 /* 1. CONFIGURACIÓN DEL CLIENTE DE SUPABASE */
-// ⚠️ Reemplaza los siguientes dos valores con los de tu proyecto en Supabase
-const SUPABASE_URL = 'https://fbivfvrkiwklswjdyygm.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZiaXZmdnJraXdrbHN3amR5eWdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1NDYyMzYsImV4cCI6MjEwMTEyMjIzNn0.kwHgdEqnKW5cQe8aUw6GmkQKvy9Mios5sgNTpvv1NFk';
+const SUPABASE_URL = 'https://rfgdcktnzdbyslinobai.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmZ2Rja3RuemRieXNsaW5vYmFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1NTIwNDIsImV4cCI6MjEwMTEyODA0Mn0.yx9s_k6gdTNGObcwVO6Jg5PcsiVtInc8y1KpZUfr9NM';
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -17,7 +16,11 @@ const MAPA_COLORES = {
     'amarillo': { hex: '#FACC15' },
     'celeste': { hex: '#38BDF8' },
     'negro': { hex: '#18181B' },
-    'azul marino': { hex: '#1E3A8A' }
+    'azul marino': { hex: '#1E3A8A' },
+    'azul': { hex: '#2563EB' },
+    'naranja': { hex: '#F97316' },
+    'beige': { hex: '#F5F5DC', borde: true },
+    'gris': { hex: '#6B7280' }
 };
 
 /* 3. VARIABLES GLOBALES Y ELEMENTOS DEL DOM */
@@ -62,13 +65,16 @@ async function cargarTarifas() {
                         )
                     )
                 )
-            `);
+            `)
+            .order('id', { ascending: true })
+            .order('id', { foreignTable: 'productos', ascending: true })
+            .order('id', { foreignTable: 'productos.adicionales', ascending: true })
+            .order('id', { foreignTable: 'productos.adicionales.opciones_adicionales', ascending: true });
 
         console.timeEnd('⏱️ Tiempo de respuesta de la Base de Datos');
 
         if (error) throw error;
 
-        // Imprimir los datos crudos obtenidos directamente de PostgreSQL/Supabase
         console.log('✅ 2. Respuesta recibida desde Supabase:', data);
 
         tarifasRCS = transformarRespuestaSupabase(data);
@@ -90,12 +96,14 @@ async function cargarTarifas() {
         console.error('❌ Error al conectar con Supabase:', error);
         console.groupEnd();
 
-        pantallaPrecio.innerHTML = `
-            <div class="p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm text-center space-y-2">
-                <p class="font-bold">❌ Error al cargar los precios</p>
-                <p class="text-xs text-slate-300">Verifica tus credenciales en script.js</p>
-            </div>
-        `;
+        if (pantallaPrecio) {
+            pantallaPrecio.innerHTML = `
+                <div class="p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm text-center space-y-2">
+                    <p class="font-bold">❌ Error al cargar los precios</p>
+                    <p class="text-xs text-slate-300">Verifica tus credenciales o conexión en script.js</p>
+                </div>
+            `;
+        }
     }
 }
 
@@ -207,7 +215,8 @@ function renderizarAdicionales() {
         for (const keyAdicional in datosProducto.adicionales) {
             const adic = datosProducto.adicionales[keyAdicional];
 
-            if (keyAdicional === 'color') {
+            // Permite capturar "color", "color_interno", "color_magico", etc.
+            if (keyAdicional.includes('color')) {
                 objetoColorAdicional = adic;
                 continue;
             }
@@ -497,17 +506,19 @@ function calcularEnTiempoReal() {
     const selectoresAdicionales = document.querySelectorAll('.select-adicional');
     selectoresAdicionales.forEach(select => {
         const opcionSeleccionada = select.options[select.selectedIndex];
-        const extra = parseFloat(opcionSeleccionada.dataset.extra) || 0;
-        costoAdicionalesUnitario += extra;
+        if (opcionSeleccionada && !opcionSeleccionada.disabled) {
+            const extra = parseFloat(opcionSeleccionada.dataset.extra) || 0;
+            costoAdicionalesUnitario += extra;
 
-        const labelTexto = select.previousElementSibling.textContent.replace(':', '');
+            const labelTexto = select.previousElementSibling.textContent.replace(':', '');
 
-        htmlAdicionalesVista += `
-            <div class="flex justify-between items-center text-xs text-slate-300 bg-slate-800/60 p-2.5 rounded-lg border border-slate-700/50">
-                <span class="font-medium">${labelTexto}:</span>
-                <span class="font-semibold text-emerald-400">${opcionSeleccionada.textContent}</span>
-            </div>
-        `;
+            htmlAdicionalesVista += `
+                <div class="flex justify-between items-center text-xs text-slate-300 bg-slate-800/60 p-2.5 rounded-lg border border-slate-700/50">
+                    <span class="font-medium">${labelTexto}:</span>
+                    <span class="font-semibold text-emerald-400">${opcionSeleccionada.textContent}</span>
+                </div>
+            `;
+        }
     });
 
     const inputColor = document.getElementById('color-seleccionado');
@@ -811,10 +822,12 @@ function ejecutarEnvioWhatsApp(nombre, documento, telefono, correo) {
     const selectoresAdicionales = document.querySelectorAll('.select-adicional');
     selectoresAdicionales.forEach(select => {
         const opcionSeleccionada = select.options[select.selectedIndex];
-        const extra = parseFloat(opcionSeleccionada.dataset.extra) || 0;
-        costoAdicionalesUnitario += extra;
-        const labelTexto = select.previousElementSibling.textContent.replace(':', '');
-        textoAdicionalesMensaje += `🔹 *${labelTexto}:* ${opcionSeleccionada.textContent}\n`;
+        if (opcionSeleccionada && !opcionSeleccionada.disabled) {
+            const extra = parseFloat(opcionSeleccionada.dataset.extra) || 0;
+            costoAdicionalesUnitario += extra;
+            const labelTexto = select.previousElementSibling.textContent.replace(':', '');
+            textoAdicionalesMensaje += `🔹 *${labelTexto}:* ${opcionSeleccionada.textContent}\n`;
+        }
     });
 
     const inputColor = document.getElementById('color-seleccionado');
