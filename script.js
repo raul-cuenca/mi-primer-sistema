@@ -1,5 +1,5 @@
 /* ==========================================================================
-   RCS MERCHANDISING - LÓGICA CON CONEXIÓN A SUPABASE (v1.2.2-db)
+   RCS MERCHANDISING - LÓGICA CON CONEXIÓN A SUPABASE (v1.2.3-db)
    ========================================================================== */
 
 /* 1. CONFIGURACIÓN DEL CLIENTE DE SUPABASE */
@@ -31,6 +31,7 @@ let ultimaEscalaNotificada = '';
 
 const categoriaSelect = document.getElementById('categoria');
 const productoSelect = document.getElementById('tipo-producto');
+const contenedorTrabajo = document.getElementById('contenedor-trabajo');
 const contenedorAdicionales = document.getElementById('contenedor-adicionales');
 const cantidadInput = document.getElementById('cantidad');
 const estadoDisenoSelect = document.getElementById('estado-diseno');
@@ -107,9 +108,6 @@ async function cargarTarifas() {
     }
 }
 
-/**
- * Convierte el array relacional de Supabase al formato estandarizado que consume la interfaz.
- */
 function transformarRespuestaSupabase(dataSupabase) {
     const estructuraOriginal = {};
 
@@ -174,10 +172,12 @@ function actualizarProductos() {
     const catSeleccionada = categoriaSelect.value;
 
     productoSelect.innerHTML = '<option value="" disabled selected>-- Selecciona Modelo --</option>';
-    contenedorAdicionales.innerHTML = '';
+    if (contenedorTrabajo) contenedorTrabajo.innerHTML = '';
+    if (contenedorAdicionales) contenedorAdicionales.innerHTML = '';
 
     if (!catSeleccionada || !tarifasRCS[catSeleccionada]) {
         productoSelect.disabled = true;
+        renderizarMuestrasColor(null);
         calcularEnTiempoReal();
         return;
     }
@@ -196,9 +196,10 @@ function actualizarProductos() {
     calcularEnTiempoReal();
 }
 
-/* 5. RENDERIZADO DE ADICIONALES Y COLORES */
+/* 5. RENDERIZADO DE ADICIONALES Y REGLAS DE NEGOCIO */
 function renderizarAdicionales() {
-    contenedorAdicionales.innerHTML = '';
+    if (contenedorTrabajo) contenedorTrabajo.innerHTML = '';
+    if (contenedorAdicionales) contenedorAdicionales.innerHTML = '';
 
     const catKey = categoriaSelect.value;
     const prodKey = productoSelect.value;
@@ -214,66 +215,88 @@ function renderizarAdicionales() {
     if (datosProducto.adicionales) {
         for (const keyAdicional in datosProducto.adicionales) {
             const adic = datosProducto.adicionales[keyAdicional];
+            const keyLower = keyAdicional.toLowerCase();
+            const labelLower = (adic.label || '').toLowerCase();
 
-            // Permite capturar "color", "color_interno", "color_magico", etc.
-            if (keyAdicional.includes('color')) {
+            // Detectar si es el campo de Color
+            if (keyLower.includes('color') || labelLower.includes('color')) {
                 objetoColorAdicional = adic;
                 continue;
             }
 
-            const divCampo = document.createElement('div');
+            const divCampo = crearSelectAdicional(keyAdicional, adic);
 
-            const label = document.createElement('label');
-            label.htmlFor = `adic-${keyAdicional}`;
-            label.className = 'block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2';
-            label.textContent = adic.label;
-
-            const select = document.createElement('select');
-            select.id = `adic-${keyAdicional}`;
-            select.className = 'w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl p-3 focus:ring-2 focus:ring-blue-800 focus:border-blue-800 transition font-medium select-adicional';
-
-            const opcionInicial = document.createElement('option');
-            opcionInicial.value = '';
-            opcionInicial.disabled = true;
-            opcionInicial.selected = true;
-            opcionInicial.textContent = `-- Selecciona ${adic.label.replace(':', '')} --`;
-            select.appendChild(opcionInicial);
-
-            for (const keyOp in adic.opciones) {
-                const op = adic.opciones[keyOp];
-                const option = document.createElement('option');
-                option.value = keyOp;
-                option.dataset.extra = op.extra;
-                option.textContent = op.nombre;
-                select.appendChild(option);
+            // Si es "Tipo de Trabajo", colocarlo en el contenedor superior
+            if (keyLower.includes('trabajo') || labelLower.includes('trabajo')) {
+                if (contenedorTrabajo) contenedorTrabajo.appendChild(divCampo);
+            } else {
+                // El resto (Tallas, Empaques, etc.) van al contenedor inferior
+                if (contenedorAdicionales) contenedorAdicionales.appendChild(divCampo);
             }
-
-            select.addEventListener('change', calcularEnTiempoReal);
-
-            divCampo.appendChild(label);
-            divCampo.appendChild(select);
-            contenedorAdicionales.appendChild(divCampo);
         }
     }
 
     renderizarMuestrasColor(objetoColorAdicional);
+    actualizarVisibilidadColores();
 }
 
+/**
+ * Crea dinámicamente un elemento SELECT para los adicionales.
+ */
+function crearSelectAdicional(keyAdicional, adic) {
+    const divCampo = document.createElement('div');
+
+    const label = document.createElement('label');
+    label.htmlFor = `adic-${keyAdicional}`;
+    label.className = 'block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2';
+    label.textContent = adic.label;
+
+    const select = document.createElement('select');
+    select.id = `adic-${keyAdicional}`;
+    select.className = 'w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl p-3 focus:ring-2 focus:ring-blue-800 focus:border-blue-800 transition font-medium select-adicional';
+
+    const opcionInicial = document.createElement('option');
+    opcionInicial.value = '';
+    opcionInicial.disabled = true;
+    opcionInicial.selected = true;
+    opcionInicial.textContent = `-- Selecciona ${(adic.label || '').replace(':', '').trim()} --`;
+    select.appendChild(opcionInicial);
+
+    for (const keyOp in adic.opciones) {
+        const op = adic.opciones[keyOp];
+        const option = document.createElement('option');
+        option.value = keyOp;
+        option.dataset.extra = op.extra;
+        option.textContent = op.nombre;
+        select.appendChild(option);
+    }
+
+    select.addEventListener('change', () => {
+        actualizarVisibilidadColores();
+        calcularEnTiempoReal();
+    });
+
+    divCampo.appendChild(label);
+    divCampo.appendChild(select);
+    return divCampo;
+}
+
+/**
+ * Renderiza los botones circulares con muestras de color.
+ */
 function renderizarMuestrasColor(adicionalColor) {
     const contenedor = document.getElementById('contenedor-colores');
     const grid = document.getElementById('grid-muestras-color');
     const inputOculto = document.getElementById('color-seleccionado');
     const labelColores = document.getElementById('label-colores');
-    const notaCosto = document.getElementById('nota-costo-color');
 
     if (!contenedor || !grid || !inputOculto) return;
 
+    deseleccionarColor();
+    grid.innerHTML = '';
+
     if (!adicionalColor || !adicionalColor.opciones) {
         contenedor.classList.add('hidden');
-        inputOculto.value = '';
-        inputOculto.dataset.extra = '0';
-        inputOculto.dataset.nombre = '';
-        if (notaCosto) notaCosto.classList.add('hidden');
         return;
     }
 
@@ -282,19 +305,22 @@ function renderizarMuestrasColor(adicionalColor) {
         labelColores.innerHTML = `🎨 ${textoLimpio} <span class="text-blue-900">*</span>`;
     }
 
-    grid.innerHTML = '';
-    inputOculto.value = '';
-    inputOculto.dataset.extra = '0';
-    inputOculto.dataset.nombre = '';
-
-    if (notaCosto) notaCosto.classList.add('hidden');
-    contenedor.classList.remove('hidden');
-
     const opciones = adicionalColor.opciones;
 
     for (const keyColor in opciones) {
         const op = opciones[keyColor];
-        const infoColor = MAPA_COLORES[keyColor.toLowerCase().trim()] || { hex: '#CBD5E1' };
+        const nombreLimpio = (op.nombre || keyColor).toLowerCase().trim();
+
+        let infoColor = null;
+        for (const colKey in MAPA_COLORES) {
+            if (nombreLimpio.includes(colKey) || keyColor.toLowerCase().includes(colKey)) {
+                infoColor = MAPA_COLORES[colKey];
+                break;
+            }
+        }
+        if (!infoColor) {
+            infoColor = { hex: '#CBD5E1' };
+        }
 
         const btnSwatch = document.createElement('button');
         btnSwatch.type = 'button';
@@ -315,6 +341,104 @@ function renderizarMuestrasColor(adicionalColor) {
 
         grid.appendChild(btnSwatch);
     }
+}
+
+/**
+ * Controla la visibilidad de los colores según el "Tipo de trabajo" elegido.
+ */
+function actualizarVisibilidadColores() {
+    const contenedorColores = document.getElementById('contenedor-colores');
+    const swatches = document.querySelectorAll('.muestra-color');
+
+    if (!contenedorColores) return;
+
+    if (swatches.length === 0) {
+        contenedorColores.classList.add('hidden');
+        return;
+    }
+
+    // Buscar si existe selector de "Tipo de trabajo"
+    const selectores = document.querySelectorAll('.select-adicional');
+    let selectTrabajo = null;
+
+    selectores.forEach(select => {
+        const labelText = select.previousElementSibling ? select.previousElementSibling.textContent.toLowerCase() : '';
+        const idText = select.id.toLowerCase();
+        if (labelText.includes('trabajo') || idText.includes('trabajo')) {
+            selectTrabajo = select;
+        }
+    });
+
+    if (selectTrabajo) {
+        const valor = selectTrabajo.value;
+        const opcionTexto = selectTrabajo.options[selectTrabajo.selectedIndex] 
+            ? selectTrabajo.options[selectTrabajo.selectedIndex].textContent.toLowerCase() 
+            : '';
+
+        // Si no ha elegido Tipo de Trabajo, el color se oculta
+        if (!valor || selectTrabajo.selectedIndex === 0) {
+            contenedorColores.classList.add('hidden');
+            deseleccionarColor();
+            return;
+        }
+
+        // Mostrar selector de color
+        contenedorColores.classList.remove('hidden');
+
+        const esSublimado = opcionTexto.includes('sublimado');
+        let btnBlanco = null;
+
+        swatches.forEach(btn => {
+            const nombreColor = (btn.title || '').toLowerCase();
+            const esBlanco = nombreColor.includes('blanco');
+
+            if (esBlanco) btnBlanco = btn;
+
+            if (esSublimado) {
+                if (esBlanco) {
+                    btn.classList.remove('hidden');
+                } else {
+                    btn.classList.add('hidden');
+                    btn.classList.remove('ring-4', 'ring-blue-800', 'scale-110');
+                    const check = btn.querySelector('.check-indicador');
+                    if (check) check.classList.add('hidden');
+                }
+            } else {
+                btn.classList.remove('hidden');
+            }
+        });
+
+        // Si es sublimado, seleccionar Blanco automáticamente
+        if (esSublimado && btnBlanco) {
+            const inputOculto = document.getElementById('color-seleccionado');
+            const colorActual = (inputOculto.dataset.nombre || '').toLowerCase();
+
+            if (!colorActual.includes('blanco')) {
+                btnBlanco.click();
+            }
+        }
+    } else {
+        // Producto sin selector de trabajo (ej. Tazas): mostrar todos los colores normalmente
+        contenedorColores.classList.remove('hidden');
+        swatches.forEach(btn => btn.classList.remove('hidden'));
+    }
+}
+
+function deseleccionarColor() {
+    const inputOculto = document.getElementById('color-seleccionado');
+    const notaCosto = document.getElementById('nota-costo-color');
+    if (inputOculto) {
+        inputOculto.value = '';
+        inputOculto.dataset.extra = '0';
+        inputOculto.dataset.nombre = '';
+    }
+    if (notaCosto) notaCosto.classList.add('hidden');
+
+    document.querySelectorAll('.muestra-color').forEach(btn => {
+        btn.classList.remove('ring-4', 'ring-blue-800', 'scale-110');
+        const check = btn.querySelector('.check-indicador');
+        if (check) check.classList.add('hidden');
+    });
 }
 
 function seleccionarColor(elementoSeleccionado, keyColor, extraCosto, nombreCompleto) {
@@ -510,7 +634,7 @@ function calcularEnTiempoReal() {
             const extra = parseFloat(opcionSeleccionada.dataset.extra) || 0;
             costoAdicionalesUnitario += extra;
 
-            const labelTexto = select.previousElementSibling.textContent.replace(':', '');
+            const labelTexto = select.previousElementSibling ? select.previousElementSibling.textContent.replace(':', '') : '';
 
             htmlAdicionalesVista += `
                 <div class="flex justify-between items-center text-xs text-slate-300 bg-slate-800/60 p-2.5 rounded-lg border border-slate-700/50">
@@ -825,7 +949,7 @@ function ejecutarEnvioWhatsApp(nombre, documento, telefono, correo) {
         if (opcionSeleccionada && !opcionSeleccionada.disabled) {
             const extra = parseFloat(opcionSeleccionada.dataset.extra) || 0;
             costoAdicionalesUnitario += extra;
-            const labelTexto = select.previousElementSibling.textContent.replace(':', '');
+            const labelTexto = select.previousElementSibling ? select.previousElementSibling.textContent.replace(':', '') : '';
             textoAdicionalesMensaje += `🔹 *${labelTexto}:* ${opcionSeleccionada.textContent}\n`;
         }
     });
@@ -907,35 +1031,13 @@ function limpiarFormulario() {
     if (cantidadInput) cantidadInput.value = '';
     if (estadoDisenoSelect) estadoDisenoSelect.selectedIndex = 0;
 
-    const selectoresAdicionales = document.querySelectorAll('.select-adicional');
-    selectoresAdicionales.forEach(select => select.selectedIndex = 0);
+    if (contenedorTrabajo) contenedorTrabajo.innerHTML = '';
+    if (contenedorAdicionales) contenedorAdicionales.innerHTML = '';
 
-    if (pantallaPrecio) {
-        pantallaPrecio.innerHTML = `
-            <p class="text-slate-400 text-sm text-center py-8">
-                Selecciona los detalles de tu producto para visualizar la cotización.
-            </p>
-        `;
-    }
-
-    const inputColor = document.getElementById('color-seleccionado');
-    if (inputColor) {
-        inputColor.value = '';
-        inputColor.dataset.extra = '0';
-        inputColor.dataset.nombre = '';
-    }
-
-    document.querySelectorAll('.muestra-color').forEach(btn => {
-        btn.classList.remove('ring-4', 'ring-blue-800', 'scale-110');
-        const check = btn.querySelector('.check-indicador');
-        if (check) check.classList.add('hidden');
-    });
+    deseleccionarColor();
 
     const contenedorColores = document.getElementById('contenedor-colores');
     if (contenedorColores) contenedorColores.classList.add('hidden');
-
-    const notaCosto = document.getElementById('nota-costo-color');
-    if (notaCosto) notaCosto.classList.add('hidden');
 }
 
 /* 11. INICIALIZACIÓN DE ESCUCHADORES */
