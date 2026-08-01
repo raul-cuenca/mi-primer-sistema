@@ -2,21 +2,16 @@
 <html lang="es">
 
 <head>
-    <!-- ================================================================= -->
-    <!-- 1. CONFIGURACIÓN Y RECURSOS DEL ENCABEZADO                        -->
-    <!-- ================================================================= -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cotizador Oficial | RCS Merchandising</title>
 
-    <!-- Framework de Estilos: Tailwind CSS (CDN para prototipado rápido) -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Tipografía Oficial: Montserrat desde Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet">
+    <!-- Tipografía Montserrat -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <!-- Configuración personalizada de Tailwind para usar Montserrat -->
     <script>
         tailwind.config = {
             theme: {
@@ -32,17 +27,12 @@
 
 <body class="bg-slate-100 font-sans text-slate-800 min-h-screen py-8 px-4 sm:px-6 lg:px-8 relative">
 
-    <!-- ================================================================= -->
-    <!-- 2. CONTENEDOR FLOTANTE PARA NOTIFICACIONES TOAST (UPSELLING)       -->
-    <!-- ================================================================= -->
-    <div id="toast-container"
-        class="fixed bottom-5 right-5 z-50 flex flex-col gap-3 pointer-events-none max-w-sm w-full px-4 sm:px-0"></div>
+    <!-- CONTENEDOR FLOTANTE PARA TOASTS -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-3 pointer-events-none max-w-sm w-full px-4 sm:px-0"></div>
 
     <div class="max-w-4xl mx-auto">
 
-        <!-- ================================================================= -->
-        <!-- 3. ENCABEZADO CORPORATIVO                                        -->
-        <!-- ================================================================= -->
+        <!-- ENCABEZADO -->
         <header class="text-center mb-8">
             <div class="inline-block bg-blue-900 text-white px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase mb-3 shadow-sm">
                 RCS Merchandising
@@ -55,40 +45,34 @@
             </p>
         </header>
 
-        <!-- ================================================================= -->
-        <!-- 4. CONTENEDOR PRINCIPAL EN DOS COLUMNAS                          -->
-        <!-- ================================================================= -->
+        <!-- CONTENEDOR PRINCIPAL -->
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
 
-            <!-- COLUMNA IZQUIERDA: FORMULARIO DE SELECCIÓN -->
+            <!-- FORMULARIO DE SELECCIÓN -->
             <div class="md:col-span-7 bg-white p-6 sm:p-8 rounded-2xl shadow-xl border border-slate-200/80">
                 <h2 class="text-lg font-bold text-slate-900 mb-5 pb-3 border-b border-slate-100 flex items-center gap-2">
                     <svg class="w-5 h-5 text-blue-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
-                        </path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                     </svg>
                     Configura tu Pedido
                 </h2>
 
                 <form id="cotizador-form" onsubmit="event.preventDefault();" class="space-y-5">
 
-                    <!-- PASO 1: Categoría de Producto -->
+                    <!-- PASO 1: Categoría -->
                     <div>
-                        <label for="categoria"
-                            class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                        <label for="categoria" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
                             1. Categoría de Producto
                         </label>
                         <select id="categoria" onchange="actualizarProductos()" required
                             class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl p-3 focus:ring-2 focus:ring-blue-800 focus:border-blue-800 transition font-medium">
-                            <option value="" disabled selected>-- Selecciona Categoría --</option>
+                            <option value="" disabled selected>-- Cargando categorías... --</option>
                         </select>
                     </div>
 
-                    <!-- PASO 2: Modelo o Variante del Producto -->
+                    <!-- PASO 2: Modelo/Variante -->
                     <div>
-                        <label for="tipo-producto"
-                            class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                        <label for="tipo-producto" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
                             2. Modelo o Variante
                         </label>
                         <select id="tipo-producto" required disabled
@@ -97,42 +81,36 @@
                         </select>
                     </div>
 
-                    <!-- PASO 3: Muestras Visuales de Color -->
+                    <!-- PASO 3: Muestras de Color -->
                     <div id="contenedor-colores" class="hidden space-y-2 pt-1">
                         <div class="flex items-center justify-between gap-2">
-                            <label id="label-colores"
-                                class="block text-xs font-bold uppercase tracking-wider text-slate-600">
+                            <label id="label-colores" class="block text-xs font-bold uppercase tracking-wider text-slate-600">
                                 🎨 Color Interno <span class="text-blue-900">*</span>
                             </label>
-                            <span id="nota-costo-color"
-                                class="text-[10px] font-semibold text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-md border border-amber-200 hidden">
+                            <span id="nota-costo-color" class="text-[10px] font-semibold text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-md border border-amber-200 hidden">
                                 +S/ 0.50 por unidad
                             </span>
                         </div>
-                        <div id="grid-muestras-color"
-                            class="flex flex-wrap gap-2 items-center p-2.5 bg-slate-50 rounded-xl border border-slate-300">
-                        </div>
+                        <div id="grid-muestras-color" class="flex flex-wrap gap-2 items-center p-2.5 bg-slate-50 rounded-xl border border-slate-300"></div>
                         <input type="hidden" id="color-seleccionado" value="">
                         <p id="error-color" class="text-[11px] text-red-500 hidden">⚠️ Por favor, elige un color para continuar.</p>
                     </div>
 
-                    <!-- PASO 4: Contenedor Dinámico para Adicionales -->
+                    <!-- PASO 4: Contenedor de Adicionales -->
                     <div id="contenedor-adicionales" class="space-y-4 pt-1"></div>
 
-                    <!-- PASO 5: Cantidad de Unidades -->
+                    <!-- PASO 5: Cantidad -->
                     <div>
-                        <label for="cantidad"
-                            class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+                        <label for="cantidad" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
                             3. Cantidad Deseada
                         </label>
                         <input type="number" id="cantidad" min="1" placeholder="Ejemplo: 24" required
                             class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-xl p-3 focus:ring-2 focus:ring-blue-800 focus:border-blue-800 transition font-semibold">
                     </div>
 
-                    <!-- PASO 6: Estado del Diseño / Logo -->
+                    <!-- PASO 6: Estado del Diseño -->
                     <div class="space-y-2">
-                        <label for="estado-diseno"
-                            class="block text-xs font-bold uppercase tracking-wider text-slate-600">
+                        <label for="estado-diseno" class="block text-xs font-bold uppercase tracking-wider text-slate-600">
                             🎨 Estado del Diseño / Logo
                         </label>
                         <select id="estado-diseno" required
@@ -147,14 +125,12 @@
                 </form>
             </div>
 
-            <!-- COLUMNA DERECHA: TARJETA DE RESUMEN -->
+            <!-- TARJETA DE RESUMEN DE PRECIO -->
             <div class="md:col-span-5 bg-slate-900 text-white p-6 sm:p-8 rounded-2xl shadow-xl border border-slate-800 md:sticky md:top-6">
                 <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-800">
                     <h3 class="text-base font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
                         <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z">
-                            </path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
                         </svg>
                         Resumen del Pedido
                     </h3>
@@ -165,46 +141,36 @@
 
                 <div id="pantalla-precio">
                     <p class="text-slate-400 text-sm text-center py-8">
-                        Selecciona los detalles de tu producto para visualizar la cotización.
+                        Conectando a la base de datos...
                     </p>
                 </div>
             </div>
 
         </div>
 
-        <!-- ================================================================= -->
-        <!-- 5. PIE DE PÁGINA CORPORATIVO                                      -->
-        <!-- ================================================================= -->
+        <!-- PIE DE PÁGINA -->
         <footer class="mt-12 text-center text-xs text-slate-500">
             © 2026 RCS Merchandising. Todos los derechos reservados.
         </footer>
     </div>
 
-    <!-- ================================================================= -->
-    <!-- 6. MODAL FLOTANTE DE CAPTURA DE DATOS DEL CLIENTE                 -->
-    <!-- ================================================================= -->
-    <div id="modal-cliente"
-        class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 border border-slate-800 text-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative animate-in fade-in zoom-in duration-200">
-
+    <!-- MODAL DE CLIENTE -->
+    <div id="modal-cliente" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 text-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
             <div class="flex justify-between items-center pb-3 border-b border-slate-800 mb-4">
                 <h3 class="text-base font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-2">
                     📋 Datos para tu Cotización
                 </h3>
-                <button onclick="cerrarModalWhatsApp()"
-                    class="text-slate-400 hover:text-white font-bold text-sm p-1 transition">✕</button>
+                <button onclick="cerrarModalWhatsApp()" class="text-slate-400 hover:text-white font-bold text-sm p-1 transition">✕</button>
             </div>
 
             <p class="text-slate-400 text-xs mb-4">
                 Ingresa tus datos para adjuntarlos a la orden y redirigirte directamente a WhatsApp.
             </p>
 
-            <form id="form-datos-cliente" onsubmit="event.preventDefault(); validarYEnviarWhatsApp();"
-                class="space-y-4">
-
+            <form id="form-datos-cliente" onsubmit="event.preventDefault(); validarYEnviarWhatsApp();" class="space-y-4">
                 <div>
-                    <label for="cliente-nombre"
-                        class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">
+                    <label for="cliente-nombre" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">
                         Nombre / Razón Social <span class="text-emerald-400">*</span>
                     </label>
                     <input type="text" id="cliente-nombre" placeholder="Ej: Juan Pérez o RCS Empresa SAC"
@@ -230,8 +196,7 @@
                 </div>
 
                 <div>
-                    <label for="cliente-telefono"
-                        class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">
+                    <label for="cliente-telefono" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">
                         Teléfono de Contacto <span class="text-emerald-400">*</span>
                     </label>
                     <input type="tel" id="cliente-telefono" placeholder="Ej: 987654321"
@@ -240,8 +205,7 @@
                 </div>
 
                 <div>
-                    <label for="cliente-correo"
-                        class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">
+                    <label for="cliente-correo" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">
                         Correo Electrónico <span class="text-slate-500 font-normal lowercase">(opcional)</span>
                     </label>
                     <input type="email" id="cliente-correo" placeholder="ejemplo@correo.com"
@@ -263,9 +227,10 @@
         </div>
     </div>
 
-    <!-- ================================================================= -->
-    <!-- 7. ENLACE A LÓGICA JAVASCRIPT                                     -->
-    <!-- ================================================================= -->
+    <!-- SDK de Supabase v2 desde CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Lógica de la aplicación -->
     <script src="script.js"></script>
 </body>
 

@@ -1,8 +1,15 @@
 /* ==========================================================================
-   RCS MERCHANDISING - LÓGICA DEL COTIZADOR INTERACTIVO (v1.2.1)
+   RCS MERCHANDISING - LÓGICA CON CONEXIÓN A SUPABASE (v1.2.1-db)
    ========================================================================== */
 
-/* 1. MAPEO HEX PARA MUESTRAS VISUALES DE COLOR */
+/* 1. CONFIGURACIÓN DEL CLIENTE DE SUPABASE */
+// ⚠️ Reemplaza los siguientes dos valores con los de tu proyecto en Supabase
+const SUPABASE_URL = 'https://fbivfvrkiwklswjdyygm.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZiaXZmdnJraXdrbHN3amR5eWdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1NDYyMzYsImV4cCI6MjEwMTEyMjIzNn0.kwHgdEqnKW5cQe8aUw6GmkQKvy9Mios5sgNTpvv1NFk';
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* 2. MAPEO HEX PARA MUESTRAS VISUALES DE COLOR */
 const MAPA_COLORES = {
     'blanco': { hex: '#FFFFFF', borde: true },
     'rojo': { hex: '#DC2626' },
@@ -13,7 +20,7 @@ const MAPA_COLORES = {
     'azul marino': { hex: '#1E3A8A' }
 };
 
-/* 2. VARIABLES GLOBALES Y ELEMENTOS DEL DOM */
+/* 3. VARIABLES GLOBALES Y ELEMENTOS DEL DOM */
 let tarifasRCS = null;
 let timerToast = null;
 let timerDebounceToast = null;
@@ -27,22 +34,121 @@ const estadoDisenoSelect = document.getElementById('estado-diseno');
 const pantallaPrecio = document.getElementById('pantalla-precio');
 const toastContainer = document.getElementById('toast-container');
 
-/* 3. CARGA ASÍNCRONA DE DATOS */
+/* 4. CARGA ASÍNCRONA DESDE LA BASE DE DATOS (SUPABASE) */
 async function cargarTarifas() {
-    try {
-        const respuesta = await fetch('precios.json?v=' + new Date().getTime());
-        if (!respuesta.ok) throw new Error("No se pudo cargar el JSON");
+    console.group('⚡ DIAGNÓSTICO DE CONEXIÓN SUPABASE');
+    console.log('📡 1. Iniciando petición HTTP a Supabase...');
+    console.time('⏱️ Tiempo de respuesta de la Base de Datos');
 
-        tarifasRCS = await respuesta.json();
+    try {
+        const { data, error } = await supabaseClient
+            .from('categorias')
+            .select(`
+                slug,
+                nombre,
+                productos (
+                    slug,
+                    nombre,
+                    precio_unidad,
+                    precio_docenas,
+                    precio_ciento,
+                    adicionales (
+                        clave,
+                        label,
+                        opciones_adicionales (
+                            clave,
+                            nombre,
+                            extra
+                        )
+                    )
+                )
+            `);
+
+        console.timeEnd('⏱️ Tiempo de respuesta de la Base de Datos');
+
+        if (error) throw error;
+
+        // Imprimir los datos crudos obtenidos directamente de PostgreSQL/Supabase
+        console.log('✅ 2. Respuesta recibida desde Supabase:', data);
+
+        tarifasRCS = transformarRespuestaSupabase(data);
+        
+        console.log('🔄 3. Estructura adaptada para la interfaz:', tarifasRCS);
+        console.groupEnd();
+        
         poblarCategorias();
+        
+        if (pantallaPrecio) {
+            pantallaPrecio.innerHTML = `
+                <p class="text-slate-400 text-sm text-center py-8">
+                    Selecciona los detalles de tu producto para visualizar la cotización.
+                </p>
+            `;
+        }
     } catch (error) {
-        console.error('Error al obtener el catálogo:', error);
+        console.timeEnd('⏱️ Tiempo de respuesta de la Base de Datos');
+        console.error('❌ Error al conectar con Supabase:', error);
+        console.groupEnd();
+
         pantallaPrecio.innerHTML = `
-            <div class="p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm text-center">
-                ❌ No se pudieron cargar los productos. Por favor recarga la página.
+            <div class="p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm text-center space-y-2">
+                <p class="font-bold">❌ Error al cargar los precios</p>
+                <p class="text-xs text-slate-300">Verifica tus credenciales en script.js</p>
             </div>
         `;
     }
+}
+
+/**
+ * Convierte el array relacional de Supabase al formato estandarizado que consume la interfaz.
+ */
+function transformarRespuestaSupabase(dataSupabase) {
+    const estructuraOriginal = {};
+
+    dataSupabase.forEach(cat => {
+        estructuraOriginal[cat.slug] = {
+            nombre: cat.nombre,
+            productos: {}
+        };
+
+        if (cat.productos && Array.isArray(cat.productos)) {
+            cat.productos.forEach(prod => {
+                const productoObj = {
+                    nombre: prod.nombre,
+                    precios: {
+                        unidad: parseFloat(prod.precio_unidad),
+                        docenas: parseFloat(prod.precio_docenas),
+                        ciento: parseFloat(prod.precio_ciento)
+                    },
+                    adicionales: {}
+                };
+
+                if (prod.adicionales && Array.isArray(prod.adicionales)) {
+                    prod.adicionales.forEach(adic => {
+                        const adicionalObj = {
+                            label: adic.label,
+                            opciones: {}
+                        };
+
+                        if (adic.opciones_adicionales && Array.isArray(adic.opciones_adicionales)) {
+                            adic.opciones_adicionales.forEach(op => {
+                                adicionalObj.opciones[op.clave] = {
+                                    nombre: op.nombre,
+                                    extra: parseFloat(op.extra)
+                                };
+                            });
+                        }
+
+                        productoObj.adicionales[adic.clave] = adicionalObj;
+                    });
+                }
+
+                estructuraOriginal[cat.slug].productos[prod.slug] = productoObj;
+            });
+        }
+    });
+
+    return estructuraOriginal;
 }
 
 function poblarCategorias() {
@@ -82,7 +188,7 @@ function actualizarProductos() {
     calcularEnTiempoReal();
 }
 
-/* 4. RENDERIZADO DE ADICIONALES Y COLORES */
+/* 5. RENDERIZADO DE ADICIONALES Y COLORES */
 function renderizarAdicionales() {
     contenedorAdicionales.innerHTML = '';
 
@@ -238,7 +344,7 @@ function seleccionarColor(elementoSeleccionado, keyColor, extraCosto, nombreComp
     }
 }
 
-/* 5. SISTEMA DE NOTIFICACIONES TOAST */
+/* 6. SISTEMA DE NOTIFICACIONES TOAST */
 function lanzarToastNotificacion(titulo, mensaje, tipo = 'amber') {
     if (!toastContainer) return;
 
@@ -279,7 +385,7 @@ function lanzarToastNotificacion(titulo, mensaje, tipo = 'amber') {
     }, 4500);
 }
 
-/* 6. CÁLCULO DE TIEMPO Y FECHA DE ENTREGA */
+/* 7. CÁLCULO DE TIEMPO Y FECHA DE ENTREGA */
 function sumarDiasHabiles(fechaInicial, diasAñadir) {
     let fecha = new Date(fechaInicial);
     let diasSumados = 0;
@@ -353,7 +459,7 @@ function calcularTiempoEntrega(cantidad, estadoDiseno) {
     };
 }
 
-/* 7. MOTOR DE CÁLCULO EN TIEMPO REAL */
+/* 8. MOTOR DE CÁLCULO EN TIEMPO REAL */
 function calcularEnTiempoReal() {
     if (!tarifasRCS) return;
 
@@ -578,7 +684,7 @@ function calcularEnTiempoReal() {
     `;
 }
 
-/* 8. MODAL DE CLIENTE Y VALIDACIONES */
+/* 9. MODAL DE CLIENTE Y VALIDACIONES */
 function abrirModalWhatsApp() {
     const modal = document.getElementById('modal-cliente');
     if (modal) modal.classList.remove('hidden');
@@ -765,7 +871,7 @@ function ejecutarEnvioWhatsApp(nombre, documento, telefono, correo) {
     limpiarFormulario();
 }
 
-/* 9. REINICIO Y LIMPIEZA */
+/* 10. REINICIO Y LIMPIEZA */
 function limpiarFormulario() {
     const inputNombre = document.getElementById('cliente-nombre');
     const selectTipoDoc = document.getElementById('cliente-tipo-doc');
@@ -819,7 +925,7 @@ function limpiarFormulario() {
     if (notaCosto) notaCosto.classList.add('hidden');
 }
 
-/* 10. INICIALIZACIÓN DE ESCUCHADORES */
+/* 11. INICIALIZACIÓN DE ESCUCHADORES */
 window.addEventListener('DOMContentLoaded', cargarTarifas);
 
 categoriaSelect.addEventListener('change', () => {
