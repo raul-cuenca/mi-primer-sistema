@@ -1,6 +1,8 @@
 /* ==========================================================================
-   MAPEO HEX PARA MUESTRAS VISUALES DE COLOR
+   RCS MERCHANDISING - LÓGICA DEL COTIZADOR INTERACTIVO (v1.2.1)
    ========================================================================== */
+
+/* 1. MAPEO HEX PARA MUESTRAS VISUALES DE COLOR */
 const MAPA_COLORES = {
     'blanco': { hex: '#FFFFFF', borde: true },
     'rojo': { hex: '#DC2626' },
@@ -11,10 +13,7 @@ const MAPA_COLORES = {
     'azul marino': { hex: '#1E3A8A' }
 };
 
-
-/* ==========================================================================
-   1. VARIABLES GLOBALES Y CAPTURA DEL DOM
-   ========================================================================== */
+/* 2. VARIABLES GLOBALES Y ELEMENTOS DEL DOM */
 let tarifasRCS = null;
 let timerToast = null;
 let timerDebounceToast = null;
@@ -28,9 +27,7 @@ const estadoDisenoSelect = document.getElementById('estado-diseno');
 const pantallaPrecio = document.getElementById('pantalla-precio');
 const toastContainer = document.getElementById('toast-container');
 
-/* ==========================================================================
-   2. CARGA ASÍNCRONA DE DATOS (ANTI-CACHÉ)
-   ========================================================================== */
+/* 3. CARGA ASÍNCRONA DE DATOS */
 async function cargarTarifas() {
     try {
         const respuesta = await fetch('precios.json?v=' + new Date().getTime());
@@ -38,8 +35,6 @@ async function cargarTarifas() {
 
         tarifasRCS = await respuesta.json();
         poblarCategorias();
-        //restaurarDatosGuardados();
-
     } catch (error) {
         console.error('Error al obtener el catálogo:', error);
         pantallaPrecio.innerHTML = `
@@ -64,7 +59,6 @@ function poblarCategorias() {
 function actualizarProductos() {
     const catSeleccionada = categoriaSelect.value;
 
-    // Placeholder neutro
     productoSelect.innerHTML = '<option value="" disabled selected>-- Selecciona Modelo --</option>';
     contenedorAdicionales.innerHTML = '';
 
@@ -88,9 +82,7 @@ function actualizarProductos() {
     calcularEnTiempoReal();
 }
 
-/* ==========================================================================
-   3. RENDERIZADO DINÁMICO DE ADICIONALES Y MUESTROS VISUALES
-   ========================================================================== */
+/* 4. RENDERIZADO DE ADICIONALES Y COLORES */
 function renderizarAdicionales() {
     contenedorAdicionales.innerHTML = '';
 
@@ -109,13 +101,11 @@ function renderizarAdicionales() {
         for (const keyAdicional in datosProducto.adicionales) {
             const adic = datosProducto.adicionales[keyAdicional];
 
-            // SI EL ADICIONAL ES 'color', LO CAPTURAMOS PARA RECTÁNGULOS/CÍRCULOS VISUALES
             if (keyAdicional === 'color') {
                 objetoColorAdicional = adic;
-                continue; // No lo creamos como <select> desplegable
+                continue;
             }
 
-            // Para otros adicionales (ej. empaque), se crea el <select> normal
             const divCampo = document.createElement('div');
 
             const label = document.createElement('label');
@@ -141,7 +131,7 @@ function renderizarAdicionales() {
                 option.dataset.extra = op.extra;
                 option.textContent = op.nombre;
                 select.appendChild(option);
-            }        
+            }
 
             select.addEventListener('change', calcularEnTiempoReal);
 
@@ -151,19 +141,9 @@ function renderizarAdicionales() {
         }
     }
 
-    // Renderizar muestras visuales con el objeto de opciones extra
     renderizarMuestrasColor(objetoColorAdicional);
 }
 
-/**
- * Dibuja las muestras circulares leyendo 'opciones' del JSON
- */
-/**
- * Dibuja las muestras circulares leyendo 'opciones' del JSON
- */
-/**
- * Dibuja las muestras circulares leyendo 'opciones' del JSON
- */
 function renderizarMuestrasColor(adicionalColor) {
     const contenedor = document.getElementById('contenedor-colores');
     const grid = document.getElementById('grid-muestras-color');
@@ -182,7 +162,6 @@ function renderizarMuestrasColor(adicionalColor) {
         return;
     }
 
-    // Actualizar título dinámico según el JSON (ej. "Color Interno de la Taza:")
     if (labelColores && adicionalColor.label) {
         const textoLimpio = adicionalColor.label.replace(':', '').trim();
         labelColores.innerHTML = `🎨 ${textoLimpio} <span class="text-blue-900">*</span>`;
@@ -192,16 +171,14 @@ function renderizarMuestrasColor(adicionalColor) {
     inputOculto.value = '';
     inputOculto.dataset.extra = '0';
     inputOculto.dataset.nombre = '';
-    
-    // Iniciar con la etiqueta de costo oculta
+
     if (notaCosto) notaCosto.classList.add('hidden');
-    
     contenedor.classList.remove('hidden');
 
     const opciones = adicionalColor.opciones;
 
     for (const keyColor in opciones) {
-        const op = opciones[keyColor]; // { nombre: "Rojo (+S/ 0.50)", extra: 0.50 }
+        const op = opciones[keyColor];
         const infoColor = MAPA_COLORES[keyColor.toLowerCase().trim()] || { hex: '#CBD5E1' };
 
         const btnSwatch = document.createElement('button');
@@ -225,25 +202,17 @@ function renderizarMuestrasColor(adicionalColor) {
     }
 }
 
-/**
- * Selecciona un color, guarda su precio extra y recalcula
- */
-/**
- * Selecciona un color, evalúa si tiene costo extra y actualiza la UI
- */
 function seleccionarColor(elementoSeleccionado, keyColor, extraCosto, nombreCompleto) {
     const inputOculto = document.getElementById('color-seleccionado');
     const errorMsg = document.getElementById('error-color');
     const notaCosto = document.getElementById('nota-costo-color');
 
-    // Quitar selección previa de todos los botones
     document.querySelectorAll('.muestra-color').forEach(btn => {
         btn.classList.remove('ring-4', 'ring-blue-800', 'scale-110');
         const check = btn.querySelector('.check-indicador');
         if (check) check.classList.add('hidden');
     });
 
-    // Activar el botón seleccionado
     elementoSeleccionado.classList.add('ring-4', 'ring-blue-800', 'scale-110');
     const checkActivo = elementoSeleccionado.querySelector('.check-indicador');
     if (checkActivo) checkActivo.classList.remove('hidden');
@@ -252,14 +221,13 @@ function seleccionarColor(elementoSeleccionado, keyColor, extraCosto, nombreComp
     inputOculto.dataset.extra = extraCosto || 0;
     inputOculto.dataset.nombre = nombreCompleto || keyColor;
 
-    // 💡 MOSTRAR U OCULTAR BADGE SEGÚN EL COSTO DEL COLOR SELECCIONADO
     if (notaCosto) {
         const extra = parseFloat(extraCosto) || 0;
         if (extra > 0) {
             notaCosto.textContent = `+S/ ${extra.toFixed(2)} por unidad`;
             notaCosto.classList.remove('hidden');
         } else {
-            notaCosto.classList.add('hidden'); // Se oculta en Blanco o costo 0
+            notaCosto.classList.add('hidden');
         }
     }
 
@@ -270,10 +238,7 @@ function seleccionarColor(elementoSeleccionado, keyColor, extraCosto, nombreComp
     }
 }
 
-
-/* ==========================================================================
-   4. SISTEMA DE NOTIFICACIONES TOAST
-   ========================================================================== */
+/* 5. SISTEMA DE NOTIFICACIONES TOAST */
 function lanzarToastNotificacion(titulo, mensaje, tipo = 'amber') {
     if (!toastContainer) return;
 
@@ -314,16 +279,14 @@ function lanzarToastNotificacion(titulo, mensaje, tipo = 'amber') {
     }, 4500);
 }
 
-/* ==========================================================================
-   5. FUNCIONES AUXILIARES DE CÁLCULO Y FORMATO DE FECHAS HÁBILES
-   ========================================================================== */
+/* 6. CÁLCULO DE TIEMPO Y FECHA DE ENTREGA */
 function sumarDiasHabiles(fechaInicial, diasAñadir) {
     let fecha = new Date(fechaInicial);
     let diasSumados = 0;
 
     while (diasSumados < diasAñadir) {
         fecha.setDate(fecha.getDate() + 1);
-        const diaSemana = fecha.getDay(); // 0 = Domingo, 6 = Sábado
+        const diaSemana = fecha.getDay();
         if (diaSemana !== 0 && diaSemana !== 6) {
             diasSumados++;
         }
@@ -390,9 +353,7 @@ function calcularTiempoEntrega(cantidad, estadoDiseno) {
     };
 }
 
-/* ==========================================================================
-   6. CÁLCULO EN TIEMPO REAL + UPSELLING Y RENDERIZADO DE PANTALLA
-   ========================================================================== */
+/* 7. MOTOR DE CÁLCULO EN TIEMPO REAL */
 function calcularEnTiempoReal() {
     if (!tarifasRCS) return;
 
@@ -400,11 +361,6 @@ function calcularEnTiempoReal() {
     const prodKey = productoSelect.value;
     const cantidad = parseInt(cantidadInput.value);
     const estadoDiseno = estadoDisenoSelect ? estadoDisenoSelect.value : 'listo';
-
-    if (catKey) localStorage.setItem('rcs_categoria', catKey);
-    if (prodKey) localStorage.setItem('rcs_producto', prodKey);
-    if (!isNaN(cantidad)) localStorage.setItem('rcs_cantidad', cantidad);
-    if (estadoDiseno) localStorage.setItem('rcs_diseno', estadoDiseno);
 
     if (!catKey || !prodKey || isNaN(cantidad) || cantidad < 1) {
         pantallaPrecio.innerHTML = `
@@ -448,7 +404,6 @@ function calcularEnTiempoReal() {
         `;
     });
 
-    // 🎨 Capturar costo y vista del Color Seleccionado (Swatches)
     const inputColor = document.getElementById('color-seleccionado');
     if (inputColor && inputColor.value) {
         const extraColor = parseFloat(inputColor.dataset.extra) || 0;
@@ -475,7 +430,7 @@ function calcularEnTiempoReal() {
 
     const infoEntrega = calcularTiempoEntrega(cantidad, estadoDiseno);
 
-    /* --- LÓGICA DE UPSELLING --- */
+    /* UPSELLING */
     let htmlBannerUpsell = '';
     let tituloToast = '';
     let mensajeToast = '';
@@ -593,7 +548,6 @@ function calcularEnTiempoReal() {
                 ` : ''}
             </div>
 
-            <!-- TARJETA DE TIEMPO Y FECHA EXACTA DE ENTREGA -->
             <div class="bg-slate-800/90 p-3.5 rounded-xl border border-slate-700 space-y-2 text-xs">
                 <div class="flex justify-between items-center text-slate-300">
                     <span class="font-medium flex items-center gap-1.5">🚚 Tiempo estimado:</span>
@@ -608,7 +562,6 @@ function calcularEnTiempoReal() {
                 </p>
             </div>
 
-            <!-- Banner de Upselling -->
             ${htmlBannerUpsell}
 
             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700/80 text-center my-3">
@@ -625,9 +578,7 @@ function calcularEnTiempoReal() {
     `;
 }
 
-/* ==========================================================================
-   7. GESTIÓN DEL MODAL DE DATOS DE CLIENTE Y VALIDACIONES
-   ========================================================================== */
+/* 8. MODAL DE CLIENTE Y VALIDACIONES */
 function abrirModalWhatsApp() {
     const modal = document.getElementById('modal-cliente');
     if (modal) modal.classList.remove('hidden');
@@ -638,7 +589,6 @@ function cerrarModalWhatsApp() {
     if (modal) modal.classList.add('hidden');
 }
 
-// Adapta el placeholder según el tipo de documento seleccionado
 function actualizarPlaceholderDoc() {
     const tipo = document.getElementById('cliente-tipo-doc').value;
     const inputDoc = document.getElementById('cliente-documento');
@@ -664,7 +614,6 @@ function validarYEnviarWhatsApp() {
     const errTel = document.getElementById('error-telefono');
     const errCorreo = document.getElementById('error-correo');
 
-    // Ocultar mensajes de error previos
     if (errNombre) errNombre.classList.add('hidden');
     if (errDoc) errDoc.classList.add('hidden');
     if (errTel) errTel.classList.add('hidden');
@@ -672,14 +621,12 @@ function validarYEnviarWhatsApp() {
 
     let esValido = true;
 
-    // 1. Validar Nombre / Razón Social (mínimo 3 caracteres)
     const nombreVal = inputNombre.value.trim();
     if (nombreVal.length < 3) {
         if (errNombre) errNombre.classList.remove('hidden');
         esValido = false;
     }
 
-    // 2. Validar Documento según Tipo Seleccionado
     const tipoDoc = selectTipoDoc.value;
     const docVal = inputDoc.value.trim();
 
@@ -712,7 +659,6 @@ function validarYEnviarWhatsApp() {
         }
     }
 
-    // 3. Validar Teléfono (mínimo 9 dígitos numéricos)
     const telVal = inputTel.value.trim();
     const regexTel = /^[0-9\s+]{9,9}$/;
     if (!regexTel.test(telVal)) {
@@ -720,7 +666,6 @@ function validarYEnviarWhatsApp() {
         esValido = false;
     }
 
-    // 4. Validar Correo (Opcional, pero si se ingresa valida sintaxis)
     const correoVal = inputCorreo.value.trim();
     if (correoVal !== "") {
         const regexCorreo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -732,10 +677,8 @@ function validarYEnviarWhatsApp() {
 
     if (!esValido) return;
 
-    // Etiqueta legible para el mensaje
     const etiquetaTipoDoc = tipoDoc === 'dni' ? 'DNI' : (tipoDoc === 'ce' ? 'Carnet de Extranjería' : 'RUC');
 
-    // Ejecutar envío a WhatsApp y cerrar modal
     ejecutarEnvioWhatsApp(nombreVal, `${etiquetaTipoDoc}: ${docVal}`, telVal, correoVal);
     cerrarModalWhatsApp();
 }
@@ -768,7 +711,6 @@ function ejecutarEnvioWhatsApp(nombre, documento, telefono, correo) {
         textoAdicionalesMensaje += `🔹 *${labelTexto}:* ${opcionSeleccionada.textContent}\n`;
     });
 
-    // 🎨 Incluir el Color en el mensaje enviado a WhatsApp
     const inputColor = document.getElementById('color-seleccionado');
     if (inputColor && inputColor.value) {
         const extraColor = parseFloat(inputColor.dataset.extra) || 0;
@@ -795,7 +737,6 @@ function ejecutarEnvioWhatsApp(nombre, documento, telefono, correo) {
     const nombreCat = tarifasRCS[catKey].nombre;
     const nombreProd = datosProducto.nombre;
 
-    // Mensaje de WhatsApp estructurado
     const mensajeTexto =
         `✨ *¡NUEVA COTIZACIÓN DESDE LA WEB!* ✨\n\n` +
         `👤 *DATOS DEL CLIENTE*\n` +
@@ -820,74 +761,12 @@ function ejecutarEnvioWhatsApp(nombre, documento, telefono, correo) {
     const mensajeCodificado = encodeURIComponent(mensajeTexto);
     const urlWhatsApp = `https://wa.me/${telefonoRCS}?text=${mensajeCodificado}`;
 
-    // Abrir WhatsApp con el mensaje
     window.open(urlWhatsApp, '_blank');
-
-    // Resetear todos los campos del cotizador y modal
     limpiarFormulario();
 }
 
-
-/* ==========================================================================
-   8. RESTAURAR DATOS DESDE LOCALSTORAGE
-   ========================================================================== */
-function restaurarDatosGuardados() {
-    const catGuardada = localStorage.getItem('rcs_categoria');
-    const prodGuardado = localStorage.getItem('rcs_producto');
-    const cantidadGuardada = localStorage.getItem('rcs_cantidad');
-    const disenoGuardado = localStorage.getItem('rcs_diseno');
-
-    if (catGuardada && tarifasRCS[catGuardada]) {
-        categoriaSelect.value = catGuardada;
-        actualizarProductos();
-
-        if (prodGuardado && tarifasRCS[catGuardada].productos[prodGuardado]) {
-            productoSelect.value = prodGuardado;
-            renderizarAdicionales();
-        }
-    }
-
-    if (cantidadGuardada) {
-        cantidadInput.value = cantidadGuardada;
-    }
-
-    if (disenoGuardado && estadoDisenoSelect) {
-        estadoDisenoSelect.value = disenoGuardado;
-    }
-
-    calcularEnTiempoReal();
-}
-
-/* ==========================================================================
-   9. ESCUCHADORES DE EVENTOS
-   ========================================================================== */
-window.addEventListener('DOMContentLoaded', cargarTarifas);
-
-categoriaSelect.addEventListener('change', () => {
-    cantidadInput.value = '';
-    localStorage.removeItem('rcs_cantidad');
-    localStorage.removeItem('rcs_producto');
-    ultimaEscalaNotificada = '';
-    actualizarProductos();
-});
-
-productoSelect.addEventListener('change', () => {
-    ultimaEscalaNotificada = '';
-    renderizarAdicionales();
-    calcularEnTiempoReal();
-});
-
-cantidadInput.addEventListener('input', calcularEnTiempoReal);
-cantidadInput.addEventListener('keyup', calcularEnTiempoReal);
-
-if (estadoDisenoSelect) {
-    estadoDisenoSelect.addEventListener('change', calcularEnTiempoReal);
-}
-
-/*LIMPIAR LOS CAMPOS DE LA COTIZACIÓN */
-
+/* 9. REINICIO Y LIMPIEZA */
 function limpiarFormulario() {
-    // 1. Limpiar campos del Modal
     const inputNombre = document.getElementById('cliente-nombre');
     const selectTipoDoc = document.getElementById('cliente-tipo-doc');
     const inputDoc = document.getElementById('cliente-documento');
@@ -900,32 +779,26 @@ function limpiarFormulario() {
     if (inputTel) inputTel.value = '';
     if (inputCorreo) inputCorreo.value = '';
 
-    // Restablecer el placeholder del documento a DNI
     actualizarPlaceholderDoc();
 
-    // 2. Limpiar campos del Cotizador Principal
     if (categoriaSelect) categoriaSelect.selectedIndex = 0;
-
-    // Disparar el evento change si existe lógica dependiente para limpiar select de productos
-    if (categoriaSelect) {
-        categoriaSelect.dispatchEvent(new Event('change'));
-    }
+    if (categoriaSelect) categoriaSelect.dispatchEvent(new Event('change'));
 
     if (productoSelect) productoSelect.selectedIndex = 0;
     if (cantidadInput) cantidadInput.value = '';
     if (estadoDisenoSelect) estadoDisenoSelect.selectedIndex = 0;
 
-    // Limpiar selectores adicionales dinámicos si existen
     const selectoresAdicionales = document.querySelectorAll('.select-adicional');
     selectoresAdicionales.forEach(select => select.selectedIndex = 0);
 
-    // 3. Resetear el resumen o tarjeta de resultados (si la tuvieras)
-    const contenedorResumen = document.getElementById('resumen-cotizacion');
-    if (contenedorResumen) {
-        contenedorResumen.innerHTML = '<p class="text-slate-400 text-sm">Selecciona un producto y cantidad para ver el cálculo.</p>';
+    if (pantallaPrecio) {
+        pantallaPrecio.innerHTML = `
+            <p class="text-slate-400 text-sm text-center py-8">
+                Selecciona los detalles de tu producto para visualizar la cotización.
+            </p>
+        `;
     }
 
-    // 4. Resetear la selección visual de colores
     const inputColor = document.getElementById('color-seleccionado');
     if (inputColor) {
         inputColor.value = '';
@@ -944,4 +817,26 @@ function limpiarFormulario() {
 
     const notaCosto = document.getElementById('nota-costo-color');
     if (notaCosto) notaCosto.classList.add('hidden');
+}
+
+/* 10. INICIALIZACIÓN DE ESCUCHADORES */
+window.addEventListener('DOMContentLoaded', cargarTarifas);
+
+categoriaSelect.addEventListener('change', () => {
+    cantidadInput.value = '';
+    ultimaEscalaNotificada = '';
+    actualizarProductos();
+});
+
+productoSelect.addEventListener('change', () => {
+    ultimaEscalaNotificada = '';
+    renderizarAdicionales();
+    calcularEnTiempoReal();
+});
+
+cantidadInput.addEventListener('input', calcularEnTiempoReal);
+cantidadInput.addEventListener('keyup', calcularEnTiempoReal);
+
+if (estadoDisenoSelect) {
+    estadoDisenoSelect.addEventListener('change', calcularEnTiempoReal);
 }
